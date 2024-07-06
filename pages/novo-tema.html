@@ -4,9 +4,6 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-    <meta name="generator" content="Hugo 0.122.0">
     <title>Metacon</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/album/">
@@ -154,17 +151,12 @@
 <header data-bs-theme="dark">
   <div class="navbar navbar-dark bg-dark shadow-sm">
     <div class="container">
-      <a href="Dashboard do Aluno.html" class="navbar-brand d-flex align-items-center">
+      <a href="/" class="navbar-brand d-flex align-items-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true" class="me-2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <strong>Metacon</strong>
       </a>
       <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
           <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
-            <li>
-              <a href="Dashboard do Aluno.html" class="nav-link text-white">
-                Menu
-              </a>
-            </li>
             <li>
               <a href="#" class="nav-link text-white">
                 Configurações
@@ -182,137 +174,30 @@
 </header>
 
 <main>
-  <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-	<a href="/" class="d-flex align-items-center my-2 my-lg-0 me-lg-auto text-white text-decoration-none">
-        	<svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"/></svg>
-        </a>
-	<ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
-        	<li>
-        		<a href="Temas alunos.html" class="nav-link text-white">Temas</a>
-          </li>
-          <li>
-			      <a href="#" class="nav-link text-white">Leituras</a>
-          </li>
-          <li>
-			      <a href="#" class="nav-link text-white">Participantes</a>
-	        </li>
-        </ul>
-  </div>
   <section class="py-5 text-center container">
-    <div class="row py-lg-5">
-      <div class="col-lg-6 col-md-8 mx-auto">
-        <h1 class="fw-light">Turma {identificador da turma}</h1>
-      </div>
-    </div>
+    <h1 class="fw-light">Criar Novo Tema</h1>
   </section>
 
   <div class="album py-5 bg-body-tertiary">
-    <div class="container">
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <form action="/new-reading" method="post">
+              <div class="mb-3"> <!-- Atualizado para usar mb-3 para espaçamento consistente -->
+                <label for="title" class="form-label">Titulo</label>
+                <input type="text" placeholder="Titulo" class="form-control" id="title" name="Titulo" required>
               </div>
-            </div>
+              <div class="mb-3"> <!-- Atualizado para usar mb-3 para espaçamento consistente -->
+                <label for="thumbnail" class="form-label">Inserir Imagem</label>
+                <br>
+                <input type="file" class="btn btn-sucess" id="thumbnail" name="Thumbnail" required multiple/>
+              </div>
+              <button type="submit" class="btn btn-bd-primary btn-primary w-100 text-white">Criar</button> 
+            </form>
           </div>
         </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <a href="Textos Aluno.html">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            </a>
-            <div class="card-body">
-              <p class="card-text">{Resumo sobre o tema}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">{Data de postagem}</small>
-              </div>
-            </div>
-          </div>
-        </div>
+      </div>
     </div>
   </div>
 
@@ -326,7 +211,7 @@
     <p class="mb-0">Novo no Metacon? <a href="/">Visite nossa página</a> ou leia nosso <a href="../getting-started/introduction/">guia de início</a>.</p>
   </div>
 </footer>
-<script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/bootstrap.bundle.min.js"></script>
 
     </body>
 </html>
