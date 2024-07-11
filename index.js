@@ -1,5 +1,26 @@
 import express from "express";
 import path from "path";
+import pg from "pg";
+
+const db = new pg.Client({
+  user: "postgres",
+  host: "localhost",
+  database: "metacom_db",
+  password: "",
+  port: 5432,
+});
+
+db.connect();
+
+db.query("SELECT * FROM users WHERE NAME = 'João' ", (err, res) => {
+  if (err) {
+    console.error("Erros executing query", err.stack);
+  } else {
+    users = res.rows;
+  }
+
+  db.end();
+})
 
 const app = express();
 const port = 3000;
