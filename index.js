@@ -7,18 +7,18 @@ const db = new pg.Client({
   host: "localhost",
   database: "metacom_db",
   password: "",
-  port: 5432,
+  port: 5432, //digite sua senha
 });
 
 db.connect();
 
-db.query("SELECT * FROM users WHERE NAME = 'João' ", (err, res) => {
+db.query("SELECT * FROM usuario WHERE nome = 'Henrique' ", (err, res) => {
   if (err) {
     console.error("Erros executing query", err.stack);
   } else {
-    users = res.rows;
+    let users = res.rows;
+    console.log(users)
   }
-
   db.end();
 })
 
