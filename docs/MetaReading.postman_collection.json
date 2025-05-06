@@ -1,0 +1,822 @@
+{
+	"info": {
+		"_postman_id": "6c193e84-6507-4300-81e8-0f3a27ddef80",
+		"name": "MetaReading",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20153371"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Student 21\",\n    \"email\": \"student22@example.com\",\n    \"password\": \"123\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/users",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Put",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"teacher 1\",\n    \"email\": \"teacher@example.com\",\n    \"old_password\": \"123\",\n    \"new_password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/users",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAvatar",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"teacher 1\",\n    \"email\": \"teacher@example.com\",\n    \"old_password\": \"123\",\n    \"new_password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/uploads/5e5424ac98718b9183bd-foto 4.jpg",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"uploads",
+								"5e5424ac98718b9183bd-foto 4.jpg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetStudentUndoneTexts",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/users/undoneTexts",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"undoneTexts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PatchAvatar",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "avatar",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/users/avatar",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"avatar"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Text",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"O pequeno príncipe\",\n    \"difficulty\": \"VERY_HARD\",\n    \"content\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod urna quam, et malesuada felis lobortis vel. Sed tincidunt mi nisl, in gravida est dignissim sed. Mauris ipsum ante, pharetra in commodo vitae, tincidunt in quam. Nullam et placerat ex, sed malesuada velit. Proin semper aliquam elit, id auctor nunc vehicula eget. Pellentesque varius justo augue, eget vehicula arcu dignissim sed. Vestibulum euismod sapien enim, eget vulputate neque sollicitudin vel. Quisque ut venenatis neque. Morbi bibendum massa magna. Vivamus et quam tellus. Donec ac porttitor dui. Suspendisse potenti. Nam faucibus tortor non accumsan efficitur. Ut sed aliquet justo, at porttitor elit. Integer ornare turpis sit amet purus egestas bibendum. Phasellus sagittis, ipsum id ultrices elementum, enim enim laoreet enim, vitae hendrerit mi enim sed risus. Morbi eu felis massa. In ut ultricies augue. Ut ut nulla molestie, gravida libero vel, ornare lectus. Quisque non lectus eget odio sollicitudin iaculis. In iaculis eu urna ut faucibus. Quisque mollis eu leo a rhoncus. Maecenas eget eleifend massa, a euismod dui. Phasellus tempor sed lacus non fringilla. Sed dui ipsum, eleifend sed rutrum vel, imperdiet sit amet lorem. Duis quis erat imperdiet leo ultrices auctor eu viverra massa.Curabitur sodales quam metus, vitae porta risus suscipit ut. Aenean sem eros, imperdiet eu mi non, sodales auctor nisl. Duis posuere vehicula nibh, sed elementum ante viverra eget. Quisque dictum arcu neque, eu imperdiet elit lacinia ac. Donec ex risus, tempus at mi quis, pulvinar blandit ex. Donec porttitor aliquet urna et porta. Etiam sollicitudin eros ante, ut consequat est molestie ut. Phasellus erat arcu, venenatis ac eleifend et, dignissim placerat metus. In commodo sapien sit amet vehicula faucibus. Aenean sagittis elit quis posuere vehicula. Mauris sit amet enim orci. Vivamus metus lectus, vestibulum eu nibh sed, ultrices accumsan mi. Fusce laoreet dignissim lacus, id vestibulum est. Phasellus accumsan varius convallis. Etiam sem erat, vulputate ac luctus quis, pulvinar non augue. Mauris nec efficitur orci, non scelerisque dui. Mauris bibendum feugiat ligula, et fermentum arcu dictum et. Cras vel posuere massa, at aliquam libero. Fusce condimentum tempor ullamcorper. Nulla metus justo, consequat ut dui et, viverra mattis nunc.\",\n    \"questions\": [\n        {\n            \"statement\": \"E1\",\n            \"choices\": [\n                {\n                    \"content\": \"A1\",\n                    \"isCorrect\": false\n                },\n                {\n                    \"content\": \"B1\",\n                    \"isCorrect\": true\n                },\n                {\n                    \"content\": \"C1\",\n                    \"isCorrect\": false\n                },\n                {\n                    \"content\": \"D1\",\n                    \"isCorrect\": false\n                }\n            ]\n        },\n        {\n            \"statement\": \"E2\",\n            \"choices\": [\n                {\n                    \"content\": \"A2\",\n                    \"isCorrect\": false\n                },\n                {\n                    \"content\": \"B2\",\n                    \"isCorrect\": false\n                },\n                {\n                    \"content\": \"C2\",\n                    \"isCorrect\": false\n                },\n                {\n                    \"content\": \"D2\",\n                    \"isCorrect\": true\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Index",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts?name=pe",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "pe"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Destroy",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ExportExcel",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1/export",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1",
+								"export"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Put",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"harry potter e o prisioneiro de azkaban\",\n    \"difficulty\": \"REGULAR\",\n    \"content\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod urna quam, et malesuada felis lobortis vel. Sed tincidunt mi nisl, in gravida est dignissim sed. Mauris ipsum ante, pharetra in commodo vitae, tincidunt in quam. Nullam et placerat ex, sed malesuada velit. Proin semper aliquam elit, id auctor nunc vehicula eget. Pellentesque varius justo augue, eget vehicula arcu dignissim sed. Vestibulum euismod sapien enim, eget vulputate neque sollicitudin vel. Quisque ut venenatis neque. Morbi bibendum massa magna. Vivamus et quam tellus. Donec ac porttitor dui. Suspendisse potenti. Nam faucibus tortor non accumsan efficitur. Ut sed aliquet justo, at porttitor elit. Integer ornare turpis sit amet purus egestas bibendum. Phasellus sagittis, ipsum id ultrices elementum, enim enim laoreet enim, vitae hendrerit mi enim sed risus. Morbi eu felis massa. In ut ultricies augue. Ut ut nulla molestie, gravida libero vel, ornare lectus. Quisque non lectus eget odio sollicitudin iaculis. In iaculis eu urna ut faucibus. Quisque mollis eu leo a rhoncus. Maecenas eget eleifend massa, a euismod dui. Phasellus tempor sed lacus non fringilla. Sed dui ipsum, eleifend sed rutrum vel, imperdiet sit amet lorem. Duis quis erat imperdiet leo ultrices auctor eu viverra massa.Curabitur sodales quam metus, vitae porta risus suscipit ut. Aenean sem eros, imperdiet eu mi non, sodales auctor nisl. Duis posuere vehicula nibh, sed elementum ante viverra eget. Quisque dictum arcu neque, eu imperdiet elit lacinia ac. Donec ex risus, tempus at mi quis, pulvinar blandit ex. Donec porttitor aliquet urna et porta. Etiam sollicitudin eros ante, ut consequat est molestie ut. Phasellus erat arcu, venenatis ac eleifend et, dignissim placerat metus. In commodo sapien sit amet vehicula faucibus. Aenean sagittis elit quis posuere vehicula. Mauris sit amet enim orci. Vivamus metus lectus, vestibulum eu nibh sed, ultrices accumsan mi. Fusce laoreet dignissim lacus, id vestibulum est. Phasellus accumsan varius convallis. Etiam sem erat, vulputate ac luctus quis, pulvinar non augue. Mauris nec efficitur orci, non scelerisque dui. Mauris bibendum feugiat ligula, et fermentum arcu dictum et. Cras vel posuere massa, at aliquam libero. Fusce condimentum tempor ullamcorper. Nulla metus justo, consequat ut dui et, viverra mattis nunc.\",\n    \"questions\": [\n        {\n            \"statement\": \"E1\",\n            \"choices\": [\n                {\n                    \"content\": \"A1\",\n                    \"isCorrect\": true,\n                    \"id\": 26\n                },\n                {\n                    \"content\": \"B1 - teste\",\n                    \"isCorrect\": false,\n                    \"id\": 27\n                },\n                {\n                    \"content\": \"C1\",\n                    \"isCorrect\": false,\n                    \"id\": 28\n                },\n                {\n                    \"content\": \"D1\",\n                    \"isCorrect\": false,\n                    \"id\": 29\n                }\n            ],\n            \"id\": 6\n        },\n        {\n            \"id\": 7,\n            \"textId\": 2,\n            \"statement\": \"E2\",\n            \"createdAt\": \"2024-08-15T00:47:02.452Z\",\n            \"updatedAt\": \"2024-08-15T00:47:02.452Z\",\n            \"active\": true,\n            \"choices\": [\n                {\n                    \"id\": 30,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"A2\",\n                    \"createdAt\": \"2024-08-15T00:47:02.452Z\",\n                    \"updatedAt\": \"2024-08-15T00:47:02.452Z\"\n                },\n                {\n                    \"id\": 31,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"B2\",\n                    \"createdAt\": \"2024-08-15T00:47:02.452Z\",\n                    \"updatedAt\": \"2024-08-15T00:47:02.452Z\"\n                },\n                {\n                    \"id\": 32,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"C2\",\n                    \"createdAt\": \"2024-08-15T00:47:02.452Z\",\n                    \"updatedAt\": \"2024-08-15T00:47:02.452Z\"\n                },\n                {\n                    \"id\": 33,\n                    \"questionId\": 7,\n                    \"isCorrect\": true,\n                    \"content\": \"D2\",\n                    \"createdAt\": \"2024-08-15T00:47:02.452Z\",\n                    \"updatedAt\": \"2024-08-15T00:47:02.452Z\"\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts/2",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCover",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"teacher 1\",\n    \"email\": \"teacher@example.com\",\n    \"old_password\": \"123\",\n    \"new_password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/uploads/f25d80fccb1032efa6fe-o pequeno principe.jpg",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"uploads",
+								"f25d80fccb1032efa6fe-o pequeno principe.jpg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PatchCover",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "cover",
+									"type": "file",
+									"src": "/home/vitor/repos/meta-reading/src/assets/o-pequeno-principe.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/texts/cover/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"texts",
+								"cover",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Class",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Turma 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Index",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes?name=1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Destroy",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RemoveStudent",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1/student/2",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1",
+								"student",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RemoveText",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1/text/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1",
+								"text",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AddText",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1/text/2",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1",
+								"text",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Join",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessKey\": \"1RctlB69\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/join",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"join"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Put",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"1A\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classes/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Session",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teacher@example.com\",\n    \"password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/session",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAuthUser",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teacher@example.com\",\n    \"password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/session",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/session",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"session"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ClassText",
+			"item": [
+				{
+					"name": "Show",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classText/1/1",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classText",
+								"1",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createAnswer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"questions\": [\n        {\n            \"id\": 6,\n            \"selectedChoiceId\": 26,\n            \"choices\": [\n                {\n                    \"id\": 26,\n                    \"questionId\": 6,\n                    \"isCorrect\": false,\n                    \"content\": \"A1\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 27,\n                    \"questionId\": 6,\n                    \"isCorrect\": true,\n                    \"content\": \"B1\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 28,\n                    \"questionId\": 6,\n                    \"isCorrect\": false,\n                    \"content\": \"C1\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 29,\n                    \"questionId\": 6,\n                    \"isCorrect\": false,\n                    \"content\": \"D1\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                }\n            ]\n        },\n        {\n            \"id\": 7,\n            \"selectedChoiceId\": 31,\n            \"choices\": [\n                {\n                    \"id\": 30,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"A2\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 31,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"B2\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 32,\n                    \"questionId\": 7,\n                    \"isCorrect\": false,\n                    \"content\": \"C2\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                },\n                {\n                    \"id\": 33,\n                    \"questionId\": 7,\n                    \"isCorrect\": true,\n                    \"content\": \"D2\",\n                    \"createdAt\": \"2024-08-28T01:48:37.817Z\",\n                    \"updatedAt\": \"2024-08-28T01:48:37.817Z\"\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{NEXT_URL_API}}/api/classText/1/2",
+							"host": [
+								"{{NEXT_URL_API}}"
+							],
+							"path": [
+								"api",
+								"classText",
+								"1",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

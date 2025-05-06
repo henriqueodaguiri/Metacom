@@ -1,0 +1,9 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    "quotes": ["error", "double"],    // Enforce double quotes
+    "semi": ["error", "always"]       // Enforce semicolons
+  }
+}

@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  avatarUrl    String?       @map("avatar_url")
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  classes      Class[]
+  classUser    ClassUser[]
+  performances Performance[]
+  answers      Answer[]
+
+  @@map("users")
+}
+
+model Class {
+  id        Int         @id @default(autoincrement())
+  accessKey String      @map("access_key")
+  name      String
+  teacher   User        @relation(fields: [teacherId], references: [id])
+  teacherId Int         @map("teacher_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  active    Boolean     @default(true)
+  classUser ClassUser[]
+  classText ClassText[]
+
+  @@map("classes")
+}
+
+model ClassUser {
+  class     Class  @relation(fields: [classId], references: [id])
+  classId   Int    @map("class_id")
+  student   User   @relation(fields: [studentId], references: [id])
+  studentId Int    @map("student_id")
+  grade     Float?
+
+  @@id([classId, studentId])
+  @@map("class_user")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+model Text {
+  id           Int           @id @default(autoincrement())
+  name         String
+  content      String
+  difficulty   Difficulty    @default(REGULAR)
+  coverUrl     String?       @map("cover_url")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  active       Boolean       @default(true)
+  classText    ClassText[]
+  performances Performance[]
+  questions    Question[]
+
+  @@map("texts")
+}
+
+enum Difficulty {
+  VERY_EASY
+  EASY
+  REGULAR
+  HARD
+  VERY_HARD
+}
+
+model ClassText {
+  class       Class         @relation(fields: [classId], references: [id])
+  classId     Int           @map("class_id")
+  text        Text          @relation(fields: [textId], references: [id])
+  textId      Int           @map("text_id")
+  Performance Performance[]
+
+  @@id([classId, textId])
+  @@map("class_text")
+}
+
+model Performance {
+  id        Int       @id @default(autoincrement())
+  student   User      @relation(fields: [studentId], references: [id])
+  studentId Int       @map("student_id")
+  classId   Int       @map("class_id")
+  textId    Int       @map("text_id")
+  classText ClassText @relation(fields: [classId, textId], references: [classId, textId])
+  grade     Float
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Text      Text      @relation(fields: [textId], references: [id])
+
+  @@map("performances")
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  text      Text     @relation(fields: [textId], references: [id])
+  textId    Int      @map("text_id")
+  statement String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  active    Boolean  @default(true)
+  choices   Choice[]
+  answers   Answer[]
+
+  @@map("questions")
+}
+
+model Choice {
+  id         Int      @id @default(autoincrement())
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId Int      @map("question_id")
+  isCorrect  Boolean  @default(false) @map("is_correct")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  answers    Answer[]
+
+  @@map("choices")
+}
+
+model Answer {
+  id         Int      @id @default(autoincrement())
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId Int      @map("question_id")
+  choice     Choice   @relation(fields: [choiceId], references: [id])
+  choiceId   Int      @map("choice_id")
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int      @map("student_id")
+
+  @@map("answers")
+}
