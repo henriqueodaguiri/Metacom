@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0",
+    "@prisma/client": "^6.7.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "firebase": "^10.12.5",
@@ -34,6 +34,6 @@
   "devDependencies": {
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
-    "prisma": "^5.17.0"
+    "prisma": "^6.7.0"
   }
 }
