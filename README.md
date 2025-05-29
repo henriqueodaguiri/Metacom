@@ -44,7 +44,17 @@ Here some exemples of how the project works:
 ### Student Class Details
 ![Student Class Details](./docs/demo6.png)
 
-## Publish
+### How to Run the Application Locally
+After downloading the project file, run the command: npm install
 
-Temporarily, the application can be accessed by Render via the following URL:
-[https://meta-reading-unifesp.onrender.com/](https://meta-reading-unifesp.onrender.com/)
+Set up a PostgreSQL database with the latest version and modify the environment variables in the .env file to connect to it.
+Run the sequence of commands to create tables and populate your database:
+prisma migrate reset --force
+prisma migrate dev --name init
+prisma generate
+node prisma/seed.js
+
+Then, run de command: npm run dev
+
+If you want to stop your database, in your command prompt as administrator (if you are running on Windows), run: net stop postgresql-x64-17
+If you want to start your database, run: net start postgresql-x64-17

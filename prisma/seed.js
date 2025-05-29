@@ -7,8 +7,10 @@ async function createUsers() {
   const password = "123";
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  const teacher = await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email: "teacher@example.com" },
+    update: {},
+    create: {
       email: "teacher@example.com",
       name: "Teacher One",
       password: hashedPassword,
@@ -16,18 +18,17 @@ async function createUsers() {
     },
   });
 
-  const students = [];
   for (let i = 1; i <= 20; i++) {
-    students.push({
-      email: `student${i}@example.com`,
-      name: `Student ${i}`,
-      password: hashedPassword,
+    await prisma.user.upsert({
+      where: { email: `student${i}@example.com` },
+      update: {},
+      create: {
+        email: `student${i}@example.com`,
+        name: `Student ${i}`,
+        password: hashedPassword,
+      },
     });
   }
-
-  await prisma.user.createMany({
-    data: students,
-  });
 }
 
 async function createClasses() {
@@ -35,19 +36,18 @@ async function createClasses() {
     where: { email: "teacher@example.com" },
   });
 
-  const classes = [];
   for (let i = 1; i <= 2; i++) {
     const accessKey = i === 1 ? "juQA6st0" : "1RctlB69";
-    classes.push({
-      name: `Class ${i}`,
-      teacherId: teacher.id,
-      accessKey,
+    await prisma.class.upsert({
+      where: { name: `Class ${i}` },
+      update: {},
+      create: {
+        name: `Class ${i}`,
+        teacherId: teacher.id,
+        accessKey,
+      },
     });
   }
-
-  await prisma.class.createMany({
-    data: classes,
-  });
 
   const createdClasses = await prisma.class.findMany();
   for (let i = 0; i < createdClasses.length; i++) {
@@ -57,8 +57,15 @@ async function createClasses() {
         where: { email: studentEmail },
       });
 
-      await prisma.classUser.create({
-        data: {
+      await prisma.classUser.upsert({
+        where: {
+          classId_studentId: {
+            classId: createdClasses[i].id,
+            studentId: student.id,
+          },
+        },
+        update: {},
+        create: {
           classId: createdClasses[i].id,
           studentId: student.id,
         },
@@ -68,41 +75,54 @@ async function createClasses() {
 }
 
 async function createTextAndQuestions() {
-  const newText = await prisma.text.create({
-    data: {
-      name: "Sample Text",
-      content: "This is a sample text content.",
-      difficulty: "REGULAR",
-    },
+  let newText = await prisma.text.findFirst({
+    where: { name: "Sample Text" },
   });
+
+  if (!newText) {
+    newText = await prisma.text.create({
+      data: {
+        name: "Sample Text",
+        content: "This is a sample text content.",
+        difficulty: "REGULAR",
+      },
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      const question = await prisma.question.create({
+        data: {
+          textId: newText.id,
+          statement: `Sample question ${i} about the text.`,
+        },
+      });
+
+      for (let j = 1; j <= 5; j++) {
+        await prisma.choice.create({
+          data: {
+            questionId: question.id,
+            isCorrect: j === 1,
+            content: `Choice ${j} content.`,
+          },
+        });
+      }
+    }
+  }
 
   const classes = await prisma.class.findMany();
   for (const cls of classes) {
-    await prisma.classText.create({
-      data: {
+    await prisma.classText.upsert({
+      where: {
+        classId_textId: {
+          classId: cls.id,
+          textId: newText.id,
+        },
+      },
+      update: {},
+      create: {
         classId: cls.id,
         textId: newText.id,
       },
     });
-  }
-
-  for (let i = 1; i <= 5; i++) {
-    const question = await prisma.question.create({
-      data: {
-        textId: newText.id,
-        statement: `Sample question ${i} about the text.`,
-      },
-    });
-
-    for (let j = 1; j <= 5; j++) {
-      await prisma.choice.create({
-        data: {
-          questionId: question.id,
-          isCorrect: j === 1,
-          content: `Choice ${j} content.`,
-        },
-      });
-    }
   }
 }
 
@@ -130,25 +150,48 @@ async function createAnswersAndPerformance() {
       });
 
       const selectedChoice = choices.find((choice) => choice.isCorrect);
-      totalGrade += selectedChoice ? 2 : 0;
 
-      await prisma.answer.create({
-        data: {
+      // Evita duplicatas de respostas
+      const existingAnswer = await prisma.answer.findFirst({
+        where: {
           questionId: question.id,
-          choiceId: selectedChoice.id,
           studentId: student.id,
         },
       });
+
+      if (!existingAnswer && selectedChoice) {
+        totalGrade += 2;
+        await prisma.answer.create({
+          data: {
+            questionId: question.id,
+            choiceId: selectedChoice.id,
+            studentId: student.id,
+          },
+        });
+      } else if (selectedChoice) {
+        totalGrade += 2;
+      }
     }
 
-    await prisma.performance.create({
-      data: {
+    // Evita duplicatas de performance
+    const existingPerformance = await prisma.performance.findFirst({
+      where: {
         studentId: student.id,
         classId: class1.id,
         textId: questions[0].textId,
-        grade: totalGrade,
       },
     });
+
+    if (!existingPerformance) {
+      await prisma.performance.create({
+        data: {
+          studentId: student.id,
+          classId: class1.id,
+          textId: questions[0].textId,
+          grade: totalGrade,
+        },
+      });
+    }
   }
 
   const classTexts = await prisma.classText.findMany({
@@ -166,7 +209,7 @@ async function createAnswersAndPerformance() {
 
     const averageGrade =
       performances.reduce((sum, perf) => sum + perf.grade, 0) /
-      performances.length;
+      (performances.length || 1);
 
     await prisma.classUser.update({
       where: {
@@ -180,11 +223,33 @@ async function createAnswersAndPerformance() {
   }
 }
 
+async function createArmstrongIntelligences() {
+  const intelligences = [
+    "Lógico-matemática",
+    "Linguística",
+    "Espacial",
+    "Musical",
+    "Corporal-cinestésica",
+    "Interpessoal",
+    "Intrapessoal",
+    "Naturalista",
+  ];
+
+  for (const intelligence of intelligences) {
+    await prisma.armstrongIntelligence.upsert({
+      where: { intelligence }, // Certifique-se que existe um unique no campo 'intelligence'
+      update: {},
+      create: { intelligence },
+    });
+  }
+}
+
 async function main() {
   await createUsers();
   await createClasses();
   await createTextAndQuestions();
   await createAnswersAndPerformance();
+  await createArmstrongIntelligences();
 }
 
 main()

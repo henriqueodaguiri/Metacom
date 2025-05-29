@@ -27,7 +27,7 @@ model User {
 model Class {
   id        Int         @id @default(autoincrement())
   accessKey String      @map("access_key")
-  name      String
+  name String @unique
   teacher   User        @relation(fields: [teacherId], references: [id])
   teacherId Int         @map("teacher_id")
   createdAt DateTime    @default(now()) @map("created_at")
@@ -142,4 +142,9 @@ model Answer {
   studentId  Int      @map("student_id")
 
   @@map("answers")
+}
+
+model ArmstrongIntelligence {
+  id    Int    @id @default(autoincrement())
+  intelligence String @unique
 }
