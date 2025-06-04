@@ -147,4 +147,6 @@ model Answer {
 model ArmstrongIntelligence {
   id    Int    @id @default(autoincrement())
   intelligence String @unique
+
+  @@map("armstrong_intelligences")
 }

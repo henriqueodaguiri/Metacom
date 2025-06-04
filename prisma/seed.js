@@ -1,12 +1,15 @@
+// Importa o Prisma Client e o bcrypt para hash de senhas
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
 
+// Cria usuários iniciais: 1 professor e 20 alunos
 async function createUsers() {
   const saltRounds = 10;
   const password = "123";
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+  // Cria ou atualiza o usuário professor
   await prisma.user.upsert({
     where: { email: "teacher@example.com" },
     update: {},
@@ -18,6 +21,7 @@ async function createUsers() {
     },
   });
 
+  // Cria ou atualiza 20 alunos
   for (let i = 1; i <= 20; i++) {
     await prisma.user.upsert({
       where: { email: `student${i}@example.com` },
@@ -31,11 +35,14 @@ async function createUsers() {
   }
 }
 
+// Cria duas turmas e associa alunos a elas
 async function createClasses() {
+  // Busca o professor
   const teacher = await prisma.user.findFirst({
     where: { email: "teacher@example.com" },
   });
 
+  // Cria ou atualiza duas turmas
   for (let i = 1; i <= 2; i++) {
     const accessKey = i === 1 ? "juQA6st0" : "1RctlB69";
     await prisma.class.upsert({
@@ -49,6 +56,7 @@ async function createClasses() {
     });
   }
 
+  // Associa 10 alunos a cada turma
   const createdClasses = await prisma.class.findMany();
   for (let i = 0; i < createdClasses.length; i++) {
     for (let j = 1; j <= 10; j++) {
@@ -74,11 +82,14 @@ async function createClasses() {
   }
 }
 
+// Cria um texto de exemplo, questões e alternativas, e associa às turmas
 async function createTextAndQuestions() {
+  // Verifica se já existe o texto
   let newText = await prisma.text.findFirst({
     where: { name: "Sample Text" },
   });
 
+  // Cria texto, questões e alternativas se não existir
   if (!newText) {
     newText = await prisma.text.create({
       data: {
@@ -88,6 +99,7 @@ async function createTextAndQuestions() {
       },
     });
 
+    // Cria 5 questões para o texto
     for (let i = 1; i <= 5; i++) {
       const question = await prisma.question.create({
         data: {
@@ -96,6 +108,7 @@ async function createTextAndQuestions() {
         },
       });
 
+      // Cria 5 alternativas para cada questão (a primeira é correta)
       for (let j = 1; j <= 5; j++) {
         await prisma.choice.create({
           data: {
@@ -108,6 +121,7 @@ async function createTextAndQuestions() {
     }
   }
 
+  // Associa o texto criado a todas as turmas
   const classes = await prisma.class.findMany();
   for (const cls of classes) {
     await prisma.classText.upsert({
@@ -126,11 +140,14 @@ async function createTextAndQuestions() {
   }
 }
 
+// Cria respostas dos alunos e calcula desempenho
 async function createAnswersAndPerformance() {
+  // Busca a turma 1
   const class1 = await prisma.class.findFirst({
     where: { name: "Class 1" },
   });
 
+  // Busca os 10 alunos da turma 1
   const studentsClass1 = await prisma.user.findMany({
     where: {
       email: {
@@ -139,8 +156,10 @@ async function createAnswersAndPerformance() {
     },
   });
 
+  // Busca todas as questões
   const questions = await prisma.question.findMany();
 
+  // Para cada aluno, cria respostas corretas e soma a nota
   for (const student of studentsClass1) {
     let totalGrade = 0;
 
@@ -194,6 +213,7 @@ async function createAnswersAndPerformance() {
     }
   }
 
+  // Calcula média de desempenho dos alunos na turma
   const classTexts = await prisma.classText.findMany({
     where: { classId: class1.id },
   });
@@ -223,6 +243,7 @@ async function createAnswersAndPerformance() {
   }
 }
 
+// Cria inteligências de Armstrong (teoria das inteligências múltiplas)
 async function createArmstrongIntelligences() {
   const intelligences = [
     "Lógico-matemática",
@@ -244,6 +265,7 @@ async function createArmstrongIntelligences() {
   }
 }
 
+// Função principal que executa todas as etapas de seed
 async function main() {
   await createUsers();
   await createClasses();
@@ -252,6 +274,7 @@ async function main() {
   await createArmstrongIntelligences();
 }
 
+// Executa o seed e trata erros
 main()
   .catch((e) => {
     console.error(e);
