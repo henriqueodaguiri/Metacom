@@ -26,6 +26,10 @@ export function Header() {
   function redirectTexts() {
     router.push("/text");
   }
+
+  function redirectLearning() {
+    router.push("/learning");
+  }
   
   function redirectUser() {
     router.push("/user");
@@ -64,6 +68,15 @@ export function Header() {
               bgColor={"transparent"}
               onClick={redirectTexts}
               title={"Leituras"}
+            />
+          )
+        }
+        {
+          (role === roles.STUDENT || role === roles.TEACHER) && (
+            <Button
+              bgColor={"transparent"}
+              onClick={redirectLearning}
+              title={role === roles.TEACHER ? "Aprendizado" : "Meu aprendizado"}
             />
           )
         }

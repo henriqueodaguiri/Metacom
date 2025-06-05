@@ -1,0 +1,46 @@
+Depois de baixar o arquivo do projeto, rode o comando "npm install" para instalar todas as dependências do projeto.
+
+
+Para ver repositórios remotos configurados: git remote -v
+
+Caso seja necessário, atualize o prisma com o comando abaixo:
+npm install @prisma/client@latest prisma@latest
+
+Configure o banco de dados PostgreSQL e modifique as variáveis e ambiente no arquivo .env para conectar a ele.
+
+Execute a sequência de comandos para criar o Banco de Dados:
+prisma migrate reset --force
+- Apaga todas as tabelas e dados do banco de dados.
+- Executa novamente todas as migrações armazenadas no diretório migrations.
+- Aplica o seeding (se você tiver um script de seed configurado)
+
+prisma migrate dev --name init
+- Criar uma nova migração com o nome init, armazenando as mudanças no esquema do banco de dados.
+- Aplicar essas migrações ao banco de dados local durante o desenvolvimento.
+- Manter o diretório migrations atualizado para controle de versão.
+
+prisma generate
+- Cria automaticamente o código necessário para interagir com o banco de dados.
+- Gera o client do Prisma (@prisma/client), permitindo consultas e operações com os modelos definidos.
+- Precisa ser rodado após mudanças no schema.prisma, garantindo que o client esteja atualizado.
+
+node prisma/seed.js
+- Inserir registros iniciais, como usuários padrão, configurações ou qualquer dado necessário para testes.
+- O arquivo prisma/seed.js contém a lógica para adicionar esses dados.
+- Esse comando deve ser executado após a configuração do banco e a aplicação das migrações.
+
+Para rodar o projeto: npm run dev
+
+Para iniciar o banco de dados depois de pausado, use o comando no prompt de comandos como administrador:
+net start postgresql-x64-17
+Para pausar o banco de dados, use o comando:
+net stop postgresql-x64-17
+
+
+Para modificar alguma tabela do banco de dados, você deve realizar essa alteração no arquivo schema.prisma.
+Após realizar a alteração, crie uma migration com o comando:
+npx prisma migrate dev --name nome_da_migration
+
+Para popular por padrão alguma tabela do banco de dados, realize modificação no arquivo seed.js e execute o comando "npx prisma db seed" para aplicar.
+
+
