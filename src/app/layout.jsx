@@ -5,6 +5,8 @@ import theme from "@/styles/theme";
 import { AuthProvider } from "@/context/auth";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function RootLayout({ children }) {
   return (
