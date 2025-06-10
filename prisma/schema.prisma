@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String
-  avatarUrl    String?       @map("avatar_url")
-  role         Role          @default(STUDENT)
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  classes      Class[]
-  classUser    ClassUser[]
-  performances Performance[]
-  answers      Answer[]
+  id             Int              @id @default(autoincrement())
+  name           String
+  email          String           @unique
+  password       String
+  avatarUrl      String?          @map("avatar_url")
+  role           Role             @default(STUDENT)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  classes        Class[]
+  classUser      ClassUser[]
+  performances   Performance[]
+  answers        Answer[]
+  LearningResult LearningResult[]
 
   @@map("users")
 }
@@ -27,7 +28,7 @@ model User {
 model Class {
   id        Int         @id @default(autoincrement())
   accessKey String      @map("access_key")
-  name String @unique
+  name      String      @unique
   teacher   User        @relation(fields: [teacherId], references: [id])
   teacherId Int         @map("teacher_id")
   createdAt DateTime    @default(now()) @map("created_at")
@@ -145,8 +146,19 @@ model Answer {
 }
 
 model ArmstrongIntelligence {
-  id    Int    @id @default(autoincrement())
+  id           Int    @id @default(autoincrement())
   intelligence String @unique
 
   @@map("armstrong_intelligences")
+}
+
+model LearningResult {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  percentages Json
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("learning_results")
 }

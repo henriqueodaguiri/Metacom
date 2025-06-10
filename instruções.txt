@@ -41,6 +41,14 @@ Para modificar alguma tabela do banco de dados, você deve realizar essa altera�
 Após realizar a alteração, crie uma migration com o comando:
 npx prisma migrate dev --name nome_da_migration
 
+Depois, reinicie a aplicação.
+
 Para popular por padrão alguma tabela do banco de dados, realize modificação no arquivo seed.js e execute o comando "npx prisma db seed" para aplicar.
 
+========================= IMPORTAÇÃO DE BIBLIOTECAS =======================
+Deve ser feito no arquivo src\app\layout.jsx e os estilos globais são definidos em src\styles\global.js
+
+========================= MUDAR DE PÁGINA =======================
+src\components\Header\index.jsx é definido a navbar
+src\middleware.js é denifinido as rotas
 

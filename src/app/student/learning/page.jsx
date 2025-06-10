@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Container, 
   ModalContent, 
@@ -53,6 +53,18 @@ const questions = [
   "Me interesso por plantas, animais ou fenômenos naturais.",
   "Gosto de estar ao ar livre, em contato com a natureza.",
   "Consigo perceber mudanças no ambiente com facilidade."
+];
+
+// Explicações das inteligências
+const intelligenceExplanations = [
+  'Linguística: Facilidade com palavras, leitura, escrita e comunicação verbal. Pessoas com essa inteligência gostam de ler, escrever, contar histórias e têm boa comunicação. Costumam aprender melhor por meio de textos e conversas.',
+  'Lógico-matemática: Habilidade com lógica, números, padrões e resolução de problemas. Indivíduos com essa inteligência gostam de desafios matemáticos, experimentos científicos e pensam de forma estruturada e analítica.',
+  'Espacial: Capacidade de visualizar e manipular imagens, mapas e espaços. Pessoas com inteligência espacial têm facilidade para desenhar, montar quebra-cabeças, imaginar cenários e compreender mapas e gráficos.',
+  'Corporal-cinestésica: Controle do corpo, coordenação motora e expressão através do movimento. Essa inteligência é marcante em quem pratica esportes, dança, teatro ou trabalhos manuais, aprendendo melhor com o corpo em ação.',
+  'Musical: Sensibilidade para ritmos, sons, melodias e apreciação musical. Indivíduos musicais gostam de cantar, tocar instrumentos, compor músicas e têm facilidade para perceber padrões sonoros.',
+  'Interpessoal: Facilidade para entender, interagir e se comunicar com outras pessoas. Pessoas interpessoais são empáticas, gostam de trabalhar em grupo, liderar, ensinar e resolver conflitos.',
+  'Intrapessoal: Autoconhecimento, reflexão sobre sentimentos e objetivos pessoais. Quem tem essa inteligência reflete sobre si mesmo, reconhece emoções, estabelece metas e busca o autodesenvolvimento.',
+  'Naturalista: Interesse e sensibilidade para a natureza, animais e fenômenos naturais. Indivíduos naturalistas gostam de estar ao ar livre, cuidar de plantas e animais, e têm facilidade para identificar padrões na natureza.'
 ];
 
 // Configuração do gráfico
@@ -133,7 +145,7 @@ const LearningDashboard = () => {
     closeModal();
     toast.success("Questionário finalizado!");
     try {
-      await api.post("/student/intelligences", { answers, percentages });
+      await api.post("/learning", { percentages });
     } catch {
       toast.error("Erro ao salvar resultado.");
     }
@@ -145,14 +157,48 @@ const LearningDashboard = () => {
     series: [{ ...baseChartOption.series[0], data: intelligencePercentages || Array(8).fill(0) }]
   };
 
+  // Função para obter explicações das inteligências predominantes
+  const getPredominantExplanations = () => {
+    if (!intelligencePercentages) return [];
+    const max = Math.max(...intelligencePercentages);
+    // Pode haver empate
+    return intelligencePercentages
+      .map((perc, idx) => perc === max ? { label: intelligenceLabels[idx], explanation: intelligenceExplanations[idx] } : null)
+      .filter(Boolean);
+  };
+
+  useEffect(() => {
+    async function fetchLearningResult() {
+      try {
+        const response = await api.get("/learning");
+        const result = response.data.result;
+        if (result && result.percentages) {
+          setIntelligencePercentages(result.percentages);
+        }
+      } catch {
+        // Se não houver resultado, deixa o gráfico zerado
+      }
+    }
+    fetchLearningResult();
+  }, []);
+
   return (
     <Container>
       <Header/>
       <div style={{ padding: "10px" }}>
         <div className="row justify-content-around">
           <div className="col-5">
-            <div style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
+            <div id="predominant_intelligences" style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
               <h1>Minhas inteligências predominantes</h1>
+              {getPredominantExplanations().length > 0 ? (
+                getPredominantExplanations().map((item, i) => (
+                  <p key={i} style={{ marginTop: 16 }}>
+                    <b>{item.label}:</b> {item.explanation.split(':').slice(1).join(':').trim()}
+                  </p>
+                ))
+              ) : (
+                <p style={{ marginTop: 16 }}>Responda o questionário para descobrir suas inteligências predominantes.</p>
+              )}
             </div>
           </div>
           <div className="col-5">
