@@ -265,6 +265,48 @@ async function createArmstrongIntelligences() {
   }
 }
 
+// Preenche LearningResult e LearningPreferences para cada aluno criado
+async function createLearningDataForStudents() {
+  const students = await prisma.user.findMany({
+    where: { role: "STUDENT" },
+  });
+
+  for (let idx = 0; idx < students.length; idx++) {
+    const student = students[idx];
+    // LearningResult (Inventário das Inteligências Múltiplas)
+    // Gera 8 valores aleatórios que somam 100
+    let lr = Array(8).fill(0).map(() => Math.random());
+    const lrSum = lr.reduce((a, b) => a + b, 0);
+    lr = lr.map(v => Number(((v / lrSum) * 100).toFixed(2)));
+    // Ajusta o último valor para garantir soma 100
+    lr[7] = Number((100 - lr.slice(0, 7).reduce((a, b) => a + b, 0)).toFixed(2));
+    await prisma.learningResult.upsert({
+      where: { userId: student.id },
+      update: {},
+      create: {
+        userId: student.id,
+        percentages: lr,
+        createdAt: new Date(),
+      },
+    });
+    // LearningPreferences (CHAEA)
+    // Gera 4 valores aleatórios que somam 100
+    let lp = Array(4).fill(0).map(() => Math.random());
+    const lpSum = lp.reduce((a, b) => a + b, 0);
+    lp = lp.map(v => Number(((v / lpSum) * 100).toFixed(2)));
+    lp[3] = Number((100 - lp.slice(0, 3).reduce((a, b) => a + b, 0)).toFixed(2));
+    await prisma.learningPreferences.upsert({
+      where: { userId: student.id },
+      update: {},
+      create: {
+        userId: student.id,
+        percentages: lp,
+        createdAt: new Date(),
+      },
+    });
+  }
+}
+
 // Função principal que executa todas as etapas de seed
 async function main() {
   await createUsers();
@@ -272,6 +314,7 @@ async function main() {
   await createTextAndQuestions();
   await createAnswersAndPerformance();
   await createArmstrongIntelligences();
+  await createLearningDataForStudents();
 }
 
 // Executa o seed e trata erros

@@ -21,6 +21,7 @@ model User {
   performances   Performance[]
   answers        Answer[]
   LearningResult LearningResult[]
+  learningPreferences LearningPreferences?
 
   @@map("users")
 }
@@ -161,4 +162,15 @@ model LearningResult {
   user User @relation(fields: [userId], references: [id])
 
   @@map("learning_results")
+}
+
+model LearningPreferences {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  percentages Json
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("learning_preferences")
 }
