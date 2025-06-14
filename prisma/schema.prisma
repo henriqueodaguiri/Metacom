@@ -29,7 +29,7 @@ model User {
 model Class {
   id        Int         @id @default(autoincrement())
   accessKey String      @map("access_key")
-  name      String      @unique
+  name      String
   teacher   User        @relation(fields: [teacherId], references: [id])
   teacherId Int         @map("teacher_id")
   createdAt DateTime    @default(now()) @map("created_at")
@@ -38,11 +38,12 @@ model Class {
   classUser ClassUser[]
   classText ClassText[]
 
+  @@unique([name, active])
   @@map("classes")
 }
 
 model ClassUser {
-  class     Class  @relation(fields: [classId], references: [id])
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId   Int    @map("class_id")
   student   User   @relation(fields: [studentId], references: [id])
   studentId Int    @map("student_id")
@@ -82,7 +83,7 @@ enum Difficulty {
 }
 
 model ClassText {
-  class       Class         @relation(fields: [classId], references: [id])
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId     Int           @map("class_id")
   text        Text          @relation(fields: [textId], references: [id])
   textId      Int           @map("text_id")
@@ -98,7 +99,7 @@ model Performance {
   studentId Int       @map("student_id")
   classId   Int       @map("class_id")
   textId    Int       @map("text_id")
-  classText ClassText @relation(fields: [classId, textId], references: [classId, textId])
+  classText ClassText @relation(fields: [classId, textId], references: [classId, textId], onDelete: Cascade)
   grade     Float
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")

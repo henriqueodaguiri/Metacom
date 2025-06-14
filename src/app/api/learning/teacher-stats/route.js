@@ -5,21 +5,11 @@ const prisma = require("@/lib/prisma");
 export async function GET(req) {
   try {
     const tokenInfo = verifyToken(req);
-    // Busca o professor e suas turmas (ClassUser -> class)
-    const teacher = await prisma.user.findFirst({
-      where: { id: tokenInfo.userId, role: "TEACHER" },
-      include: {
-        classUser: { // ClassUser[]
-          include: {
-            class: true // pega o objeto turma
-          }
-        }
-      }
+    // Busca as turmas onde o professor é teacherId E estão ativas
+    const classes = await prisma.class.findMany({
+      where: { teacherId: tokenInfo.userId, active: true },
     });
-    if (!teacher) return Response.json({ studentsAvg: Array(8).fill(0), classes: [] });
-
-    // Busca IDs das turmas do professor
-    const classIds = teacher.classUser.map(cu => cu.classId);
+    const classIds = classes.map(cls => cls.id);
     if (classIds.length === 0) return Response.json({ studentsAvg: Array(8).fill(0), classes: [] });
 
     // Busca todos os alunos dessas turmas
@@ -34,7 +24,6 @@ export async function GET(req) {
     const results = await prisma.learningResult.findMany({
       where: { userId: { in: studentIds } }
     });
-    // Calcula média geral
     let studentsAvg = Array(8).fill(0);
     if (results.length > 0) {
       for (const r of results) {
@@ -44,12 +33,12 @@ export async function GET(req) {
     }
 
     // Média por turma
-    const classes = [];
-    for (const cu of teacher.classUser) {
-      const classId = cu.classId;
-      const turma = cu.class;
+    const classesStats = [];
+    for (const turma of classes) {
+      const classId = turma.id;
       const turmaUsers = classUsers.filter(cu2 => cu2.classId === classId);
       const turmaStudentIds = turmaUsers.map(cu2 => cu2.studentId);
+      const turmaStudentNames = turmaUsers.map(cu2 => cu2.student.name); // <-- add names
       const turmaResults = results.filter(r => turmaStudentIds.includes(r.userId));
       let avg = Array(8).fill(0);
       if (turmaResults.length > 0) {
@@ -58,9 +47,32 @@ export async function GET(req) {
         }
         avg = avg.map(v => Number((v / turmaResults.length).toFixed(2)));
       }
-      classes.push({ className: turma?.name || "Turma", avg });
+      classesStats.push({ id: turma.id, className: turma?.name || "Turma", avg, students: turmaStudentNames });
     }
-    return Response.json({ studentsAvg, classes });
+    // Monta lista global de alunos para scatter chart geral (sem duplicidade)
+    const studentMap = {};
+    classUsers.forEach(cu => {
+      const result = results.find(r => r.userId === cu.studentId);
+      if (!studentMap[cu.student.id]) {
+        studentMap[cu.student.id] = {
+          id: cu.student.id,
+          name: cu.student.name,
+          classNames: [classes.find(cls => cls.id === cu.classId)?.name || ''],
+          percentages: result ? result.percentages : Array(8).fill(0)
+        };
+      } else {
+        // Adiciona turma se não estiver na lista
+        const turmaNome = classes.find(cls => cls.id === cu.classId)?.name || '';
+        if (!studentMap[cu.student.id].classNames.includes(turmaNome)) {
+          studentMap[cu.student.id].classNames.push(turmaNome);
+        }
+      }
+    });
+    const allStudents = Object.values(studentMap).map(s => ({
+      ...s,
+      className: s.classNames.join(', ')
+    }));
+    return Response.json({ studentsAvg, classes: classesStats, allStudents });
   } catch (error) {
     console.error("Erro ao buscar estatísticas do professor:", error, error?.message, error?.stack);
     return handleError(error);

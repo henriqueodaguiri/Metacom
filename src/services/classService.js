@@ -81,12 +81,10 @@ const deleteById = async (id, userId) => {
     throw new AppError("Você não é o professor da turma!", 404);
   }
 
-  await prisma.class.update({
+  // Exclui definitivamente a turma
+  await prisma.class.delete({
     where: {
       id: classroom.id
-    },
-    data: {
-      active: false
     }
   });
 };
@@ -451,7 +449,6 @@ const validateName = async(id, name) => {
     classroom = await prisma.class.findFirst({
       where: {
         name: name,
-        active: true,
         id: {
           not: id
         }
@@ -461,12 +458,12 @@ const validateName = async(id, name) => {
     classroom = await prisma.class.findFirst({
       where: {
         name,
-        active: true,
       }
     });
   }
 
-  if(classroom) {
+  // Só bloqueia se a turma encontrada estiver ativa
+  if(classroom && classroom.active) {
     throw new AppError("Esse nome já está vinculado a outra turma!");
   }
 };
@@ -523,6 +520,19 @@ const update = async ({ id, name, userId }) => {
   });
 };
 
+// Adiciona um aluno a uma turma
+const addStudentToClass = async (classId, studentId) => {
+  // Verifica se já existe
+  const exists = await prisma.classUser.findFirst({
+    where: { classId, studentId }
+  });
+  if (!exists) {
+    await prisma.classUser.create({
+      data: { classId, studentId }
+    });
+  }
+};
+
 module.exports = {
   create,
   update,
@@ -534,5 +544,6 @@ module.exports = {
   addText,
   createExcel,
   join,
-  updateGrades
+  updateGrades,
+  addStudentToClass // exporta a função
 };

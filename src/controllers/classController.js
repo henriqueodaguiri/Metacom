@@ -43,12 +43,21 @@ const addText = async (classId, textId, teacherId) => {
 };
 
 const create = async (req, userId) => {
-  const { name } = await req.json();
+  const { name, studentIds } = await req.json();
   if(!name) {
     throw new AppError("Dados obrigatórios não informados!", 400);
   }
 
+  // Cria a turma normalmente
   const classroom = await classService.create({ name, userId });
+
+  // Se vier studentIds, associa os alunos à turma
+  if (Array.isArray(studentIds) && studentIds.length > 0) {
+    for (const studentId of studentIds) {
+      await classService.addStudentToClass(classroom.id, studentId);
+    }
+  }
+
   return createResponse({ body: { classroom }, status: 201 });
 };
 
