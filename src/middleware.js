@@ -66,6 +66,10 @@ export async function middleware(request) {
     "/learning_preferences": {
       [roles.TEACHER]: "/teacher/learning_preferences",
       [roles.STUDENT]: "/student/learning_preferences"
+    },
+    "/dashboard": {
+      [roles.TEACHER]: "/teacher/dashboard",
+      [roles.STUDENT]: "/student/dashboard"
     }
   };
 
@@ -110,6 +114,9 @@ export const config = {
     "/learning_preferences",
     "/teacher/learning_preferences",
     "/student/learning_preferences",
+    "/dashboard",
+    "/teacher/dashboard",
+    "/student/dashboard",
     "/user"
   ],
 };

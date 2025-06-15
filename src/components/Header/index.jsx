@@ -34,6 +34,10 @@ export function Header() {
   function redirectLearningPreferences() {
     router.push("/learning_preferences");
   }
+
+    function redirectDashboard() {
+    router.push("/dashboard");
+  }
   
   function redirectUser() {
     router.push("/user");
@@ -90,6 +94,15 @@ export function Header() {
               bgColor={"transparent"}
               onClick={redirectLearningPreferences}
               title={role === roles.TEACHER ? "Preferências dos alunos" : "Minhas preferências"}
+            />
+          )
+        }
+                {
+          (role === roles.STUDENT || role === roles.TEACHER) && (
+            <Button
+              bgColor={"transparent"}
+              onClick={redirectDashboard}
+              title={role === roles.TEACHER ? "Dashboard" : "Meu desempenho"}
             />
           )
         }
