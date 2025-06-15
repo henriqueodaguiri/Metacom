@@ -54,6 +54,8 @@ const LearningTeacherDashboard = () => {
   const [allStudents, setAllStudents] = useState([]);
   const [creatingGroupIdx, setCreatingGroupIdx] = useState(null);
   const [groupCreateMsg, setGroupCreateMsg] = useState(null);
+  const [globalModalOpen, setGlobalModalOpen] = useState(false);
+  const [globalModalData, setGlobalModalData] = useState({ intelligenceIdx: 0, students: [] });
 
   useEffect(() => {
     async function fetchData() {
@@ -90,6 +92,24 @@ const LearningTeacherDashboard = () => {
       setModalData({ className: turma.name, intelligenceIdx, students: [] });
       setModalOpen(true);
     }
+  };
+
+  // Handler para abrir modal do gráfico global
+  const handleGlobalBarClick = (params) => {
+    const intelligenceIdx = params.dataIndex;
+    // Filtra alunos com predominância única nesta inteligência
+    const students = allStudents.filter(aluno => {
+      if (!aluno.percentages) return false;
+      const max = Math.max(...aluno.percentages);
+      const indices = aluno.percentages.map((v, i) => v === max ? i : -1).filter(i => i !== -1);
+      return indices.length === 1 && indices[0] === intelligenceIdx;
+    }).map(aluno => ({
+      name: aluno.name,
+      className: aluno.className || '-',
+      value: aluno.percentages ? Number(aluno.percentages[intelligenceIdx]).toFixed(2) : '-'
+    }));
+    setGlobalModalData({ intelligenceIdx, students });
+    setGlobalModalOpen(true);
   };
 
   // Função para criar turma a partir de sugestão de grupo
@@ -243,75 +263,55 @@ const LearningTeacherDashboard = () => {
                 <button onClick={() => setModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
               </div>
             </Modal>
-            {/* Scatter chart global de todos os alunos */}
+            {/* Gráfico de barras: quantidade de alunos por inteligência predominante */}
             <div style={{ margin: '48px 0 0 0', background: '#fff', borderRadius: 16, padding: 24 }}>
               <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                Distribuição Global dos Alunos (2 inteligências predominantes)
+                Quantidade de alunos por inteligência predominante
                 <span style={{ position: 'relative', display: 'inline-block' }}>
-                  <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra a distribuição dos alunos considerando suas duas inteligências mais altas, agrupando-os visualmente." />
+                  <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra quantos alunos têm cada inteligência como predominante." />
                 </span>
               </h2>
               <ReactECharts
                 option={{
-                  tooltip: {
-                    trigger: 'item',
-                    formatter: function(params) {
-                      const aluno = params.data;
-                      return `<b>${aluno.name}</b><br/>${aluno.classNames ? aluno.classNames.join(', ') : ''}<br/>${intelligenceLabels[aluno.xIdx]}: ${aluno.xVal.toFixed(2)}<br/>${intelligenceLabels[aluno.yIdx]}: ${aluno.yVal.toFixed(2)}`;
-                    }
-                  },
+                  tooltip: { trigger: 'axis' },
                   xAxis: {
-                    name: '1ª Inteligência',
-                    min: 0, max: 100,
-                    splitLine: { show: true },
+                    type: 'category',
+                    data: intelligenceLabels,
                     axisLabel: {
-                      formatter: function(value) {
-                        return value;
-                      }
+                      width: 120,
+                      formatter: value => value.length > 12 ? value.match(/.{1,12}/g).join('\n') : value
                     }
                   },
-                  yAxis: {
-                    name: '2ª Inteligência',
-                    min: 0, max: 100,
-                    splitLine: { show: true },
-                    axisLabel: {
-                      formatter: function(value) {
-                        return value;
-                      }
-                    }
-                  },
+                  yAxis: { type: 'value', minInterval: 1 },
                   series: [{
-                    symbolSize: 18,
-                    data: allStudents.map(aluno => {
-                      const arr = (aluno.percentages || []).map((v, i) => ({ v, i }));
-                      const sorted = arr.slice().sort((a, b) => b.v - a.v);
-                      const xIdx = sorted[0]?.i ?? 0;
-                      const yIdx = sorted[1]?.i ?? 1;
-                      return {
-                        value: [sorted[0]?.v ?? 0, sorted[1]?.v ?? 0],
-                        name: aluno.name,
-                        classNames: aluno.classNames || [],
-                        xIdx, yIdx,
-                        xVal: sorted[0]?.v ?? 0,
-                        yVal: sorted[1]?.v ?? 0
-                      };
+                    name: 'Alunos',
+                    type: 'bar',
+                    data: intelligenceLabels.map((_, idx) => {
+                      let count = 0;
+                      allStudents.forEach(aluno => {
+                        if (!aluno.percentages) return;
+                        const max = Math.max(...aluno.percentages);
+                        const indices = aluno.percentages.map((v, i) => v === max ? i : -1).filter(i => i !== -1);
+                        if (indices.length === 1 && indices[0] === idx) count++;
+                      });
+                      return count;
                     }),
-                    type: 'scatter',
-                    itemStyle: { color: '#8e44ad', opacity: 0.7 }
-                  }]
+                    itemStyle: { color: '#8e44ad' },
+                    barCategoryGap: '30%'
+                  }],
+                  grid: { left: 80, right: 40, top: 40, bottom: 40 }
                 }}
                 style={{ height: 420, width: '100%' }}
+                onEvents={{ click: handleGlobalBarClick }}
               />
+              {/* Sugestões de agrupamento global */}
               <div style={{ marginTop: 32 }}>
                 <h3>Sugestões de agrupamento global</h3>
                 {(() => {
                   const groups = getGroupingSuggestions(allStudents);
-                  // Filtra sugestões que já existem como turma
                   const filteredGroups = groups.filter(g => {
-                    if (!g.students.length) return true; // mantém sugestões vazias
-                    // Extrai nomes dos alunos do grupo (removendo o nome da turma, se houver)
+                    if (!g.students.length) return true;
                     const groupStudentNames = g.students.map(s => s.replace(/ \(.*\)$/, '')).sort();
-                    // Procura turma com exatamente os mesmos alunos (agora cls.students é array de nomes)
                     return !classAverages.some(cls => {
                       if (!cls.students || cls.students.length !== groupStudentNames.length) return false;
                       const classStudentNames = cls.students.slice().sort();
@@ -345,6 +345,47 @@ const LearningTeacherDashboard = () => {
           </>
         )}
       </div>
+      {/* Modal para mostrar alunos com predominância única */}
+      <Modal
+        isOpen={globalModalOpen}
+        onRequestClose={() => setGlobalModalOpen(false)}
+        contentLabel="Alunos por inteligência predominante"
+        style={{
+          content: {
+            top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.5)", borderRadius: 20,
+            backgroundColor: "#FFF", width: 600, minHeight: 200,
+            maxWidth: "95vw", padding: 32, overflow: "auto"
+          }
+        }}
+      >
+        <h2>{intelligenceLabels[globalModalData.intelligenceIdx]}</h2>
+        <table style={{ width: '100%', marginTop: 24, borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Turma</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Valor (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {globalModalData.students.length === 0 ? (
+              <tr><td colSpan={3}>Nenhum aluno encontrado.</td></tr>
+            ) : (
+              globalModalData.students.map((aluno, i) => (
+                <tr key={i}>
+                  <td style={{ padding: 8 }}>{aluno.name}</td>
+                  <td style={{ padding: 8 }}>{aluno.className}</td>
+                  <td style={{ padding: 8 }}>{aluno.value}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 24, textAlign: 'right' }}>
+          <button onClick={() => setGlobalModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+        </div>
+      </Modal>
     </Container>
   );
 };
