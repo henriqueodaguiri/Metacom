@@ -16,6 +16,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("student");
   const router = useRouter();
 
   function validateInput() {
@@ -43,7 +44,7 @@ const SignUp = () => {
     }
 
     try {
-      await api.post("/users", {name, email, password});
+      await api.post("/users", {name, email, password, role});
       toast.success("Cadastrado com sucesso!", {
         onClose: () => {
           router.push("/signin");
@@ -85,6 +86,13 @@ const SignUp = () => {
           type="text"
           onChange={e => setName(e.target.value)}
         />
+        <div style={{ width: '100%', margin: '8px 0' }}>
+          <label style={{ fontWeight: 500, marginRight: 12 }}>Tipo de conta:</label>
+          <select value={role} onChange={e => setRole(e.target.value)} style={{ padding: 8, borderRadius: 8, border: '1px solid #ccc', minWidth: 120 }}>
+            <option value="student">Aluno</option>
+            <option value="teacher">Professor</option>
+          </select>
+        </div>
         <Input 
             icon={MdEmail}
             placeholder="E-mail"
