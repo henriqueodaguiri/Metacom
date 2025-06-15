@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import './styles.css';
 import Modal from "react-modal";
 import { FaQuestionCircle } from "react-icons/fa";
+import { GiBrain, GiArchiveResearch, GiPerspectiveDiceSixFacesRandom, GiBodyBalance, GiMusicalNotes, GiThreeFriends, GiSelfLove, GiTreeBranch } from 'react-icons/gi';
 
 const intelligenceLabels = [
   'Linguística', 'Lógico-matemática', 'Espacial', 'Corporal-cinestésica',
@@ -45,6 +46,18 @@ const baseChartOption = {
   grid: { left: 130, right: 40, top: 40, bottom: 40 }
 };
 
+// Ícones para cada inteligência
+const intelligenceIcons = [
+  GiBrain, // Linguística
+  GiArchiveResearch, // Lógico-matemática
+  GiPerspectiveDiceSixFacesRandom, // Espacial
+  GiBodyBalance, // Corporal-cinestésica
+  GiMusicalNotes, // Musical
+  GiThreeFriends, // Interpessoal
+  GiSelfLove, // Intrapessoal
+  GiTreeBranch // Naturalista
+];
+
 const LearningTeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [studentsAvg, setStudentsAvg] = useState(Array(8).fill(0));
@@ -56,6 +69,7 @@ const LearningTeacherDashboard = () => {
   const [groupCreateMsg, setGroupCreateMsg] = useState(null);
   const [globalModalOpen, setGlobalModalOpen] = useState(false);
   const [globalModalData, setGlobalModalData] = useState({ intelligenceIdx: 0, students: [] });
+  const [infoModal, setInfoModal] = useState({ open: false, idx: 0 });
 
   useEffect(() => {
     async function fetchData() {
@@ -153,6 +167,56 @@ const LearningTeacherDashboard = () => {
   return (
     <Container>
       <Header/>
+      {/* Botão de explicação sobre inteligências múltiplas */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0 16px 0' }}>
+        <button
+          onClick={() => setInfoModal({ open: true, idx: -1 })}
+          style={{
+            background: '#8e44ad', color: '#fff', border: 'none', borderRadius: 8,
+            padding: '10px 28px', fontWeight: 'bold', fontSize: 17, cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(142,68,173,0.08)', marginBottom: 8
+          }}
+        >
+          O que são as Inteligências Múltiplas?
+        </button>
+      </div>
+      {/* Card de ícones das inteligências */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 24,
+        margin: '0 0 32px 0',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        {intelligenceLabels.map((label, idx) => {
+          const Icon = intelligenceIcons[idx];
+          return (
+            <div
+              key={idx}
+              style={{
+                background: '#f8f6ff',
+                borderRadius: 16,
+                boxShadow: '0 2px 8px rgba(142,68,173,0.08)',
+                padding: 24,
+                minWidth: 160,
+                minHeight: 160,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.2s',
+              }}
+              onClick={() => setInfoModal({ open: true, idx })}
+              title={label}
+            >
+              <Icon size={48} color={['#8e44ad','#2980b9','#16a085','#e67e22','#c0392b','#f1c40f','#2ecc71','#7f8c8d'][idx]} />
+              <span style={{ marginTop: 16, fontWeight: 'bold', fontSize: 18, color: '#444', textAlign: 'center' }}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
       <div style={{ padding: 24 }}>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           Estatísticas das Inteligências Múltiplas por Turma
@@ -385,6 +449,50 @@ const LearningTeacherDashboard = () => {
         <div style={{ marginTop: 24, textAlign: 'right' }}>
           <button onClick={() => setGlobalModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
         </div>
+      </Modal>
+      {/* Modal de explicação da inteligência */}
+      <Modal
+        isOpen={infoModal.open}
+        onRequestClose={() => setInfoModal({ ...infoModal, open: false })}
+        contentLabel="Sobre a inteligência"
+        style={{
+          content: {
+            top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.5)', borderRadius: 20,
+            backgroundColor: '#FFF', width: 500, minHeight: 200,
+            maxWidth: '95vw', padding: 32, overflow: 'auto'
+          }
+        }}
+      >
+        {infoModal.idx === -1 ? (
+          <>
+            <h2 style={{ marginTop: 0 }}>O que são as Inteligências Múltiplas?</h2>
+            <div style={{ fontSize: 17, color: '#444', marginBottom: 16 }}>
+              A Teoria das Inteligências Múltiplas, proposta por Howard Gardner, sugere que a inteligência não é um conceito único e fixo, mas sim um conjunto de diferentes habilidades e competências que cada pessoa pode desenvolver em maior ou menor grau. <br /><br />
+              Gardner identificou pelo menos oito tipos principais de inteligência, como a linguística, lógico-matemática, espacial, corporal-cinestésica, musical, interpessoal, intrapessoal e naturalista. <br /><br />
+              Cada indivíduo possui um perfil único, podendo apresentar predominância em uma ou mais dessas inteligências. Reconhecer e valorizar essa diversidade é fundamental para promover uma educação mais inclusiva, personalizada e eficaz.
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              {(() => {
+                const Icon = intelligenceIcons[infoModal.idx];
+                return <Icon size={40} color={['#8e44ad','#2980b9','#16a085','#e67e22','#c0392b','#f1c40f','#2ecc71','#7f8c8d'][infoModal.idx]} />;
+              })()}
+              <h2 style={{ margin: 0 }}>{intelligenceLabels[infoModal.idx]}</h2>
+            </div>
+            <div style={{ fontSize: 17, color: '#444', marginBottom: 16 }}>
+              {intelligenceExplanations[infoModal.idx]}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+            </div>
+          </>
+        )}
       </Modal>
     </Container>
   );

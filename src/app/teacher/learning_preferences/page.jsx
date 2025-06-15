@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import './styles.css';
 import Modal from "react-modal";
 import { FaQuestionCircle } from "react-icons/fa";
+import { GiRunningShoe, GiThink, GiBookCover, GiGears } from 'react-icons/gi';
 
 const learningStyleLabels = [
   'Ativo', 'Reflexivo', 'Teórico', 'Pragmático'
@@ -24,6 +25,14 @@ const learningStyleHowPrefers = [
   'Prefere aprender observando, refletindo e analisando antes de agir.',
   'Prefere aprender por meio de conceitos, modelos, teorias e análises lógicas.',
   'Prefere aprender aplicando ideias na prática e resolvendo problemas reais.'
+];
+
+// Ícones para cada estilo de aprendizagem
+const learningStyleIcons = [
+  GiRunningShoe, // Ativo
+  GiThink,       // Reflexivo
+  GiBookCover,   // Teórico
+  GiGears        // Pragmático
 ];
 
 const baseChartOption = {
@@ -82,6 +91,7 @@ const LearningPreferencesDashboard = () => {
   const [pizzaModal, setPizzaModal] = useState({ open: false, styleIdx: 0, alunos: [] });
   // Estado para feedback de criação de turma
   const [createClassFeedback, setCreateClassFeedback] = useState({ msg: '', success: null });
+  const [styleInfoModal, setStyleInfoModal] = useState({ open: false, idx: 0 });
 
   useEffect(() => {
     async function fetchData() {
@@ -147,12 +157,109 @@ const LearningPreferencesDashboard = () => {
     <Container>
       <Header/>
       <div style={{ padding: 24 }}>
+        {/* Botão de explicação sobre estilos de aprendizagem */}
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0 16px 0' }}>
+          <button
+            onClick={() => setStyleInfoModal({ open: true, idx: -1 })}
+            style={{
+              background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '10px 28px', fontWeight: 'bold', fontSize: 17, cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(41,128,185,0.08)', marginBottom: 8
+            }}
+          >
+            O que são os Estilos de Aprendizagem?
+          </button>
+        </div>
+        {/* Card de ícones dos estilos de aprendizagem */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 24,
+          margin: '0 0 32px 0',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          {learningStyleLabels.map((label, idx) => {
+            const Icon = learningStyleIcons[idx];
+            return (
+              <div
+                key={idx}
+                style={{
+                  background: '#f6f8fa',
+                  borderRadius: 16,
+                  boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+                  padding: 24,
+                  minWidth: 160,
+                  minHeight: 160,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'box-shadow 0.2s',
+                }}
+                onClick={() => setStyleInfoModal({ open: true, idx })}
+                title={label}
+              >
+                <Icon size={48} color={['#2980b9','#16a085','#e67e22','#c0392b'][idx]} />
+                <span style={{ marginTop: 16, fontWeight: 'bold', fontSize: 18, color: '#444', textAlign: 'center' }}>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+        {/* Título movido para baixo dos cards */}
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           Estatísticas dos Estilos de Aprendizagem (Honey-Alonso)
           <span style={{ position: 'relative', display: 'inline-block' }}>
             <FaQuestionCircle style={{ color: '#2980b9', cursor: 'pointer' }} title="Cada gráfico mostra a média dos estilos de aprendizagem dos alunos de cada turma, segundo o questionário de Honey-Alonso." />
           </span>
         </h1>
+        {/* Modal de explicação dos estilos de aprendizagem */}
+        <Modal
+          isOpen={styleInfoModal.open}
+          onRequestClose={() => setStyleInfoModal({ ...styleInfoModal, open: false })}
+          contentLabel="Sobre o estilo de aprendizagem"
+          style={{
+            content: {
+              top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.5)', borderRadius: 20,
+              backgroundColor: '#FFF', width: 500, minHeight: 200,
+              maxWidth: '95vw', padding: 32, overflow: 'auto'
+            }
+          }}
+        >
+          {styleInfoModal.idx === -1 ? (
+            <>
+              <h2 style={{ marginTop: 0 }}>O que são os Estilos de Aprendizagem?</h2>
+              <div style={{ fontSize: 17, color: '#444', marginBottom: 16 }}>
+                Os estilos de aprendizagem, segundo o modelo de Honey-Alonso, representam diferentes maneiras pelas quais as pessoas preferem aprender e processar informações. <br /><br />
+                Os quatro estilos principais são: Ativo, Reflexivo, Teórico e Pragmático. Cada pessoa pode apresentar predominância em um ou mais desses estilos, o que influencia como ela se envolve, compreende e retém novos conhecimentos.<br /><br />
+                Conhecer o estilo de aprendizagem dos alunos permite ao professor diversificar estratégias e tornar o ensino mais eficaz e personalizado.
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <button onClick={() => setStyleInfoModal({ ...styleInfoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                {(() => {
+                  const Icon = learningStyleIcons[styleInfoModal.idx];
+                  return <Icon size={40} color={['#2980b9','#16a085','#e67e22','#c0392b'][styleInfoModal.idx]} />;
+                })()}
+                <h2 style={{ margin: 0 }}>{learningStyleLabels[styleInfoModal.idx]}</h2>
+              </div>
+              <div style={{ fontSize: 17, color: '#444', marginBottom: 16 }}>
+                {learningStyleExplanations[styleInfoModal.idx]}
+                <br /><br />
+                <span style={{ color: '#2980b9', fontStyle: 'italic' }}>{learningStyleHowPrefers[styleInfoModal.idx]}</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <button onClick={() => setStyleInfoModal({ ...styleInfoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              </div>
+            </>
+          )}
+        </Modal>
         {loading ? (
           <p>Carregando...</p>
         ) : (
@@ -196,8 +303,8 @@ const LearningPreferencesDashboard = () => {
                         <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
                           {indices.map(idx2 => (
                             <li key={idx2}>
-                              <b>{learningStyleLabels[idx2]}</b>: {learningStyleExplanations[idx2].split(':').slice(1).join(':').trim()}<br/>
-                              <span style={{ color: '#2980b9', fontStyle: 'italic' }}>{learningStyleHowPrefers[idx2]}</span>
+                              <b>{learningStyleLabels[idx2]}</b>: {learningStyleExplanations[idx2] ? learningStyleExplanations[idx2].split(':').slice(1).join(':').trim() : 'Descrição não encontrada.'}<br/>
+                              <span style={{ color: '#2980b9', fontStyle: 'italic' }}>{learningStyleHowPrefers[idx2] || ''}</span>
                             </li>
                           ))}
                         </ul>
