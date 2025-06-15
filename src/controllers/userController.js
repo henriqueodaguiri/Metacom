@@ -2,8 +2,9 @@ const userService = require("@/services/userService");
 const createResponse = require("@/lib/responseHelper");
 
 const create = async (req) => {
-  const { name, email, password } = await req.json();
-  await userService.create({ name, email, password });
+  const { name, email, password, role } = await req.json();
+  // Garante que role é repassado para o service
+  await userService.create({ name, email, password, role });
   
   return createResponse({ status: 201 });
 };

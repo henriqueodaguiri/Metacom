@@ -71,7 +71,7 @@ const getStudentUndoneTexts = async (id) => {
   return undoneTexts.flat();
 };
 
-const create = async ({ name, email, password }) => {
+const create = async ({ name, email, password, role }) => {
   const emailAlreadyRegister = await prisma.user.findFirst({
     where: {
       email
@@ -84,12 +84,16 @@ const create = async ({ name, email, password }) => {
 
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
-  
+  let dbRole = 'STUDENT';
+  if (role && (role.toUpperCase() === 'TEACHER' || role.toUpperCase() === 'STUDENT')) {
+    dbRole = role.toUpperCase();
+  }
   await prisma.user.create({
     data: {
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: dbRole
     }
   });
 };
