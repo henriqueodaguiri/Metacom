@@ -1,287 +1,420 @@
 "use client";
 import { useState, useEffect } from "react";
-import { 
-  Container, 
-  ModalContent, 
-  ModalButtonsContent
-} from "./styles";
+import { Container } from "./styles";
 import { Header } from "@/components/Header";
-import { Button } from "@/components/Button";
+import ReactECharts from "echarts-for-react";
 import { api } from "@/lib/api";
-import Modal from "react-modal";
-import ReactECharts from 'echarts-for-react';
-import { toast } from "react-toastify";
 import './styles.css';
+import Modal from "react-modal";
+import { FaQuestionCircle } from "react-icons/fa";
 
-// Labels dos estilos de aprendizagem (CHAEA)
-const styleLabels = [
+const learningStyleLabels = [
   'Ativo', 'Reflexivo', 'Teórico', 'Pragmático'
 ];
 
-// Perguntas do CHAEA (exemplo, 10 para cada estilo)
-const questions = [
-  // Ativo
-  "Gosto de novas experiências e desafios.",
-  "Participo ativamente de atividades em grupo.",
-  "Sou espontâneo e gosto de agir rapidamente.",
-  "Gosto de resolver problemas de forma prática.",
-  "Tenho facilidade em iniciar conversas.",
-  "Gosto de experimentar sem medo de errar.",
-  "Prefiro ação a planejamento.",
-  "Gosto de correr riscos calculados.",
-  "Sou entusiasmado com novidades.",
-  "Gosto de atividades dinâmicas.",
-  // Reflexivo
-  "Prefiro observar antes de agir.",
-  "Gosto de analisar diferentes pontos de vista.",
-  "Sou cuidadoso ao tomar decisões.",
-  "Gosto de ouvir mais do que falar.",
-  "Reflito sobre minhas experiências.",
-  "Prefiro pensar antes de agir.",
-  "Gosto de anotar e registrar informações.",
-  "Observo detalhes que outros não percebem.",
-  "Gosto de analisar causas e consequências.",
-  "Sou paciente ao aprender.",
-  // Teórico
-  "Gosto de modelos, teorias e conceitos.",
-  "Procuro lógica e coerência nas informações.",
-  "Gosto de estruturar ideias de forma organizada.",
-  "Prefiro informações fundamentadas.",
-  "Gosto de analisar sistemas e estruturas.",
-  "Busco explicações racionais.",
-  "Gosto de estudar regras e princípios.",
-  "Prefiro clareza e objetividade.",
-  "Gosto de planejar antes de agir.",
-  "Sou exigente com argumentos e provas.",
-  // Pragmático
-  "Gosto de aplicar o que aprendo na prática.",
-  "Prefiro soluções objetivas e diretas.",
-  "Gosto de testar ideias imediatamente.",
-  "Sou prático e objetivo.",
-  "Gosto de resultados rápidos.",
-  "Prefiro métodos comprovados.",
-  "Gosto de adaptar ideias à realidade.",
-  "Busco eficiência nas tarefas.",
-  "Gosto de aprender fazendo.",
-  "Prefiro atividades com aplicação imediata."
+const learningStyleExplanations = [
+  'Ativo: Prefere aprender fazendo, experimentando e participando ativamente das atividades.',
+  'Reflexivo: Prefere observar, refletir e analisar antes de agir.',
+  'Teórico: Valoriza conceitos, modelos e análises lógicas para aprender.',
+  'Pragmático: Gosta de aplicar ideias na prática e resolver problemas reais.'
 ];
 
-// Explicações dos estilos de aprendizagem
-const styleExplanations = [
-  'Ativo: Pessoas com esse estilo gostam de novas experiências, envolvem-se em atividades, são espontâneas, abertas e gostam de desafios. Aprendem melhor participando e experimentando. Geralmente preferem aprender em grupo, gostam de dinâmicas, jogos, simulações e situações práticas. Podem se sentir entediadas com tarefas repetitivas ou muita teoria, buscando sempre novidades e ação.',
-  'Reflexivo: Pessoas reflexivas preferem observar, analisar e refletir antes de agir. Gostam de considerar diferentes pontos de vista e aprendem melhor pensando cuidadosamente sobre as situações. Tendem a ser observadores atentos, valorizam o tempo para ponderar e organizar informações antes de tomar decisões. Sentem-se confortáveis em ambientes calmos, onde podem analisar dados e experiências sem pressa.',
-  'Teórico: Indivíduos teóricos valorizam lógica, modelos, teorias e organização. Gostam de analisar, estruturar e buscar explicações racionais, aprendendo melhor com conceitos claros e fundamentados. Preferem materiais bem organizados, esquemas, mapas conceituais e explicações detalhadas. Costumam questionar a coerência das informações e buscam entender os princípios por trás dos fatos.',
-  'Pragmático: Pessoas pragmáticas focam na aplicação prática do conhecimento. Gostam de testar ideias, buscar resultados rápidos e aprender fazendo, preferindo métodos objetivos e eficientes. Sentem-se motivadas por desafios concretos, resolução de problemas e tarefas com aplicação imediata. Valorizam exemplos reais, ferramentas práticas e instruções claras para colocar o aprendizado em prática rapidamente.'
+const learningStyleHowPrefers = [
+  'Prefere aprender por meio de atividades práticas, experimentação e participação ativa.',
+  'Prefere aprender observando, refletindo e analisando antes de agir.',
+  'Prefere aprender por meio de conceitos, modelos, teorias e análises lógicas.',
+  'Prefere aprender aplicando ideias na prática e resolvendo problemas reais.'
 ];
 
-// Configuração do gráfico
 const baseChartOption = {
   tooltip: {},
-  xAxis: { type: 'value' },
+  xAxis: { type: 'value', max: 100 },
   yAxis: {
     type: 'category',
-    data: styleLabels,
+    data: learningStyleLabels,
     axisLabel: {
       width: 180,
       formatter: value => value.length > 18 ? value.match(/.{1,18}/g).join('\n') : value
     }
   },
   series: [{
-    name: 'Pontuação',
+    name: 'Média',
     type: 'bar',
     data: Array(4).fill(0),
-    itemStyle: { color: '#8e44ad' },
+    itemStyle: { color: '#2980b9' },
     barCategoryGap: '30%'
   }],
   grid: { left: 130, right: 40, top: 40, bottom: 40 }
 };
 
-const LearningDashboard = () => {
-  // Estados principais
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
-  const [stylePercentages, setStylePercentages] = useState(null);
-
-  // Abre o modal e reseta respostas
-  function openModal() {
-    setIsModalOpen(true);
-    setCurrentPage(0);
-    setAnswers(Array(questions.length).fill(null));
-  }
-
-  // Fecha o modal
-  function closeModal() {
-    setIsModalOpen(false);
-  }
-
-  // Calcula pontuação de cada estilo (sim=1, não=0)
-  const getStyleScores = () => {
-    const scores = Array(styleLabels.length).fill(0);
-    answers.forEach((ans, i) => {
-      if (ans === 1) scores[Math.floor(i / 10)] += 1;
+// Função utilitária para sugerir agrupamentos por estilo predominante
+function sugerirAgrupamentosPorEstilo(students) {
+  // students: [{ name, percentages: [..] }]
+  if (!students || students.length === 0) return [];
+  // Descobre o(s) estilo(s) predominante(s) de cada aluno
+  const alunosPorEstilo = [[], [], [], []]; // Ativo, Reflexivo, Teórico, Pragmático
+  students.forEach(aluno => {
+    if (!aluno || !Array.isArray(aluno.percentages)) return;
+    const max = Math.max(...aluno.percentages);
+    aluno.percentages.forEach((v, idx) => {
+      if (v === max && alunosPorEstilo[idx]) {
+        alunosPorEstilo[idx].push(aluno);
+      }
     });
-    return scores;
-  };
+  });
+  // Cria sugestões de grupos para cada estilo
+  const sugestoes = alunosPorEstilo.map((grupo, idx) => ({
+    estilo: learningStyleLabels[idx],
+    alunos: grupo.map(a => a.name),
+    count: grupo.length
+  })).filter(g => g.count > 1); // Só sugere grupos com mais de 1 aluno
+  return sugestoes;
+}
 
-  // Calcula porcentagem de cada estilo
-  const getStylePercentages = () => {
-    const scores = getStyleScores();
-    const totalScore = scores.reduce((sum, val) => sum + val, 0) || 1;
-    const percentages = scores.map(score => (score / totalScore) * 100);
-    return percentages;
-  };
-
-  // Salva resposta e avança para próxima pergunta
-  const handleAnswer = value => {
-    const updated = [...answers];
-    updated[currentPage] = value;
-    setAnswers(updated);
-    if (currentPage < questions.length - 1) setCurrentPage(currentPage + 1);
-  };
-
-  // Volta para pergunta anterior
-  const handlePrev = () => {
-    if (currentPage > 0) setCurrentPage(currentPage - 1);
-  };
-
-  // Finaliza questionário, salva resultado e fecha modal
-  const handleFinish = async () => {
-    const percentages = getStylePercentages();
-    setStylePercentages(percentages);
-    closeModal();
-    toast.success("Questionário finalizado!");
-    try {
-      await api.post("/learning_preferences", { percentages });
-    } catch {
-      toast.error("Erro ao salvar resultado.");
-    }
-  };
-
-  // Atualiza gráfico com os resultados
-  const chartOption = {
-    ...baseChartOption,
-    series: [{ ...baseChartOption.series[0], data: stylePercentages || Array(4).fill(0) }]
-  };
-
-  // Função para obter explicações dos estilos predominantes
-  const getPredominantExplanations = () => {
-    if (!stylePercentages) return [];
-    const max = Math.max(...stylePercentages);
-    // Pode haver empate
-    return stylePercentages
-      .map((perc, idx) => perc === max ? { label: styleLabels[idx], explanation: styleExplanations[idx] } : null)
-      .filter(Boolean);
-  };
+const LearningPreferencesDashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [studentsAvg, setStudentsAvg] = useState(Array(4).fill(0));
+  const [classAverages, setClassAverages] = useState([]); // [{ className, avg: [..] }]
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({ className: '', styleIdx: 0, students: [] });
+  const [allStudents, setAllStudents] = useState([]);
+  // Novo estado para modal do gráfico de pizza
+  const [pizzaModal, setPizzaModal] = useState({ open: false, styleIdx: 0, alunos: [] });
+  // Estado para feedback de criação de turma
+  const [createClassFeedback, setCreateClassFeedback] = useState({ msg: '', success: null });
 
   useEffect(() => {
-    async function fetchLearningPreferences() {
+    async function fetchData() {
+      setLoading(true);
       try {
-        const response = await api.get("/learning_preferences");
-        const result = response.data.result;
-        if (result && result.percentages) {
-          setStylePercentages(result.percentages);
-        }
-      } catch {
-        // Se não houver resultado, deixa o gráfico zerado
+        const res = await api.get("/learning/teacher-stats?type=preferences");
+        setStudentsAvg(res.data.studentsAvg || Array(4).fill(0));
+        setClassAverages(res.data.classes || []);
+        setAllStudents(res.data.allStudents || []);
+      } catch (e) {
+        setStudentsAvg(Array(4).fill(0));
+        setClassAverages([]);
+        setAllStudents([]);
       }
+      setLoading(false);
     }
-    fetchLearningPreferences();
+    fetchData();
   }, []);
+
+  // Handler para abrir modal ao clicar na barra
+  const handleBarClick = async (params, turma) => {
+    const styleIdx = params.dataIndex;
+    try {
+      const res = await api.get(`/classes/${turma.id}/students-learning-preferences?styleIdx=${styleIdx}`);
+      setModalData({
+        className: turma.name,
+        styleIdx,
+        students: res.data.students || []
+      });
+      setModalOpen(true);
+    } catch {
+      setModalData({ className: turma.name, styleIdx, students: [] });
+      setModalOpen(true);
+    }
+  };
+
+  // Exemplo de uso das sugestões no dashboard global (fora do map de turmas):
+  const agrupamentosPorEstilo = sugerirAgrupamentosPorEstilo(allStudents).filter(grupo => {
+    // Para cada sugestão, verifica se já existe uma turma com exatamente os mesmos alunos
+    const grupoAlunosSet = new Set(grupo.alunos);
+    return !classAverages.some(cls => {
+      const turmaAlunos = (cls.students || []);
+      if (turmaAlunos.length !== grupo.alunos.length) return false;
+      // Verifica se todos os alunos do grupo estão na turma e vice-versa
+      return turmaAlunos.every(a => grupoAlunosSet.has(a)) && grupoAlunosSet.size === turmaAlunos.length;
+    });
+  });
+
+  // Gráfico de pizza: considerar todos os alunos do professor, não só os agrupamentos sugeridos
+  const alunosPorEstilo = [[], [], [], []]; // Ativo, Reflexivo, Teórico, Pragmático
+  allStudents.forEach(aluno => {
+    if (!aluno || !Array.isArray(aluno.percentages)) return;
+    const max = Math.max(...aluno.percentages);
+    aluno.percentages.forEach((v, idx) => {
+      if (v === max && alunosPorEstilo[idx]) {
+        alunosPorEstilo[idx].push(aluno);
+      }
+    });
+  });
+  const pizzaData = alunosPorEstilo.map((grupo, idx) => ({ value: grupo.length, name: learningStyleLabels[idx] }));
 
   return (
     <Container>
       <Header/>
-      <div style={{ padding: "10px" }}>
-        <div className="row justify-content-around">
-          <div className="col-5">
-            <div id="predominant_intelligences" style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
-              <h1>Meu estilo de aprendizagem predominante</h1>
-              {getPredominantExplanations().length > 0 ? (
-                getPredominantExplanations().map((item, i) => (
-                  <p key={i} style={{ marginTop: 16 }}>
-                    <b>{item.label}:</b> {item.explanation.split(':').slice(1).join(':').trim()}
-                  </p>
-                ))
-              ) : (
-                <p style={{ marginTop: 16 }}>Responda o questionário para descobrir seu estilo de aprendizagem predominante.</p>
-              )}
-            </div>
-          </div>
-          <div className="col-5">
-            <div style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
-              <h1>Estilos de Aprendizagem (CHAEA)</h1>
-              <div style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
-                <ReactECharts option={chartOption} style={{ height: 300 }} />
-              </div>
-              <p>Esses estilos refletem como você prefere aprender e processar informações.</p>
-              <p>O questionário ajuda a identificar seu estilo de aprendizagem predominante.</p>
-              <Button title="Refazer questionário" onClick={openModal} width="100%"/>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal do questionário */}
-      {isModalOpen && (
-        <Modal
-          isOpen={isModalOpen}
-          onRequestClose={closeModal}
-          contentLabel="Questionário"
-          style={{
-            content: {
-              top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-              boxShadow: "0 4px 8px rgba(0,0,0,0.5)", borderRadius: 20,
-              backgroundColor: "#FFF", width: 700, minHeight: 400,
-              maxWidth: "90vw", height: "60vh", padding: 40,
-              overflow: "auto"
-            }
-          }}
-        >
-          <ModalContent>
-            <h2>Instruções: Marque de 1 a 5 conforme o quanto a afirmação se parece com você:</h2>
-            <h2>1 = Nada a ver | 2 = Pouco | 3 = Mais ou menos | 4 = Bastante | 5 = Totalmente</h2>
-            <div style={{ margin: "32px 0" }}>
-              <h3>Pergunta {currentPage + 1} de {questions.length}</h3>
-              <p style={{ fontSize: 20 }}>{questions[currentPage]}</p>
-              <div style={{ display: "flex", gap: 16, marginTop: 24 }}>
-                {[1, 0].map(value => (
-                  <Button
-                    key={value}
-                    title={value === 1 ? "Sim" : "Não"}
-                    width={100}
-                    onClick={() => handleAnswer(value)}
-                    style={{
-                      background: answers[currentPage] === value ? "#4F8EF7" : "#eee",
-                      color: answers[currentPage] === value ? "#fff" : "#333"
+      <div style={{ padding: 24 }}>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          Estatísticas dos Estilos de Aprendizagem (Honey-Alonso)
+          <span style={{ position: 'relative', display: 'inline-block' }}>
+            <FaQuestionCircle style={{ color: '#2980b9', cursor: 'pointer' }} title="Cada gráfico mostra a média dos estilos de aprendizagem dos alunos de cada turma, segundo o questionário de Honey-Alonso." />
+          </span>
+        </h1>
+        {loading ? (
+          <p>Carregando...</p>
+        ) : (
+          <>
+            {classAverages.length === 0 && (
+              <>
+                <p>Nenhuma turma encontrada.</p>
+                <pre style={{background:'#eee',padding:8}}>{JSON.stringify({studentsAvg, classAverages}, null, 2)}</pre>
+              </>
+            )}
+            {/* Gráficos das turmas */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'stretch', justifyContent: 'flex-start' }}>
+              {classAverages.map((cls, idx) => (
+                <div key={idx} style={{ flex: '1 1 48%', maxWidth: '48%', minWidth: 320, background: 'white', borderRadius: 16, padding: 24, marginBottom: 32, display: 'flex', flexDirection: 'column' }}>
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {cls.className}
+                    <span style={{ position: 'relative', display: 'inline-block' }}>
+                      <FaQuestionCircle style={{ color: '#2980b9', cursor: 'pointer' }} title="Este gráfico mostra a média dos estilos de aprendizagem dos alunos desta turma." />
+                    </span>
+                  </h2>
+                  <ReactECharts 
+                    option={{
+                      ...baseChartOption,
+                      series: [{ ...baseChartOption.series[0], data: cls.avg }]
+                    }} 
+                    style={{ height: 320, width: '100%' }}
+                    onEvents={{
+                      click: (params) => handleBarClick(params, cls)
                     }}
                   />
-                ))}
-              </div>
+                  {/* Descrição do(s) estilo(s) predominante(s) */}
+                  {(() => {
+                    if (!cls.avg || cls.avg.length === 0) return null;
+                    const max = Math.max(...cls.avg);
+                    const indices = cls.avg
+                      .map((v, i) => v === max ? i : -1)
+                      .filter(i => i !== -1);
+                    return (
+                      <div style={{ marginTop: 16 }}>
+                        <b>Estilo(s) predominante(s):</b>
+                        <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
+                          {indices.map(idx2 => (
+                            <li key={idx2}>
+                              <b>{learningStyleLabels[idx2]}</b>: {learningStyleExplanations[idx2].split(':').slice(1).join(':').trim()}<br/>
+                              <span style={{ color: '#2980b9', fontStyle: 'italic' }}>{learningStyleHowPrefers[idx2]}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ))}
             </div>
-            <ModalButtonsContent>
-              <Button title="Cancelar" width="100%" onClick={closeModal} />
-              {currentPage > 0 && (
-                <Button title="Anterior" width="100%" onClick={handlePrev} />
-              )}
-              {currentPage === questions.length - 1 && answers[currentPage] !== null && (
-                <Button title="Finalizar" width="100%" onClick={handleFinish} />
-              )}
-            </ModalButtonsContent>
-          </ModalContent>
-        </Modal>
-      )}
+            {/* Card de sugestões de agrupamento por estilo predominante */}
+            {agrupamentosPorEstilo.length > 0 && (
+              <div style={{
+                margin: '32px 0',
+                background: '#f6f8fa',
+                borderRadius: 16,
+                boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+                padding: 24,
+                width: '100%',
+                maxWidth: 'none',
+                display: 'block'
+              }}>
+                {/* Gráfico de agrupamento por estilo */}
+                <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 24px auto' }}>
+                  <ReactECharts
+                    option={{
+                      tooltip: { trigger: 'item', formatter: '{b}: {c} aluno(s) ({d}%)' },
+                      legend: {
+                        orient: 'vertical',
+                        right: 0,
+                        top: 'center',
+                        data: learningStyleLabels
+                      },
+                      series: [{
+                        name: 'Alunos',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        label: {
+                          show: true,
+                          position: 'outside',
+                          formatter: '{b}: {c}'
+                        },
+                        emphasis: {
+                          label: {
+                            show: true,
+                            fontSize: 18,
+                            fontWeight: 'bold'
+                          }
+                        },
+                        labelLine: { show: true },
+                        data: pizzaData
+                      }]
+                    }}
+                    style={{ height: 340, width: '100%' }}
+                    onEvents={{
+                      click: (params) => {
+                        if (params && typeof params.dataIndex === 'number') {
+                          const styleIdx = params.dataIndex;
+                          // Filtra alunos daquele estilo e ordena por predominância
+                          const alunos = alunosPorEstilo[styleIdx]
+                            .map(aluno => {
+                              // Descobre as turmas do aluno
+                              const turmas = classAverages.filter(cls => (cls.students||[]).includes(aluno.name)).map(cls => cls.className);
+                              return {
+                                name: aluno.name,
+                                turmas,
+                                valor: aluno.percentages[styleIdx] || 0
+                              };
+                            })
+                            .sort((a, b) => b.valor - a.valor);
+                          setPizzaModal({ open: true, styleIdx, alunos });
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <h2 style={{ color: '#2980b9', marginBottom: 12 }}>Sugestões de agrupamento por estilo de aprendizagem predominante</h2>
+                <ul style={{ paddingLeft: 20, margin: 0 }}>
+                  {agrupamentosPorEstilo.map((grupo, i) => (
+                    <li key={i} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span>
+                        <b>{grupo.estilo}:</b> {grupo.alunos.map((aluno, j) => {
+                          const turmas = classAverages.filter(cls => (cls.students||[]).includes(aluno)).map(cls => cls.className);
+                          return `${aluno}${turmas.length ? ' (' + turmas.join(', ') + ')' : ''}${j < grupo.alunos.length - 1 ? ', ' : ''}`;
+                        })}
+                      </span>
+                      <button
+                        style={{
+                          marginLeft: 8,
+                          padding: '4px 14px',
+                          borderRadius: 8,
+                          background: '#2980b9',
+                          color: '#fff',
+                          border: 'none',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          fontSize: 14
+                        }}
+                        onClick={async () => {
+                          setCreateClassFeedback({ msg: '', success: null });
+                          try {
+                            await api.post('/classes', {
+                              name: `${grupo.estilo} (${new Date().toLocaleDateString()})`,
+                              studentIds: allStudents.filter(s => grupo.alunos.includes(s.name)).map(s => s.id)
+                            });
+                            setCreateClassFeedback({ msg: 'Turma criada com sucesso!', success: true });
+                            // Opcional: atualizar turmas sem reload
+                            // window.location.reload();
+                          } catch (e) {
+                            setCreateClassFeedback({ msg: 'Erro ao criar turma: ' + (e?.response?.data?.message || e.message), success: false });
+                          }
+                        }}
+                      >Criar turma</button>
+                    </li>
+                  ))}
+                </ul>
+                {createClassFeedback.msg && (
+                  <div style={{ marginTop: 24, color: createClassFeedback.success ? '#27ae60' : '#c0392b', fontWeight: 'bold', fontSize: 16 }}>
+                    {createClassFeedback.msg}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Modal para mostrar valores por aluno */}
+            <Modal
+              isOpen={modalOpen}
+              onRequestClose={() => setModalOpen(false)}
+              contentLabel="Valores por aluno"
+              style={{
+                content: {
+                  top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.5)", borderRadius: 20,
+                  backgroundColor: "#FFF", width: 500, minHeight: 200,
+                  maxWidth: "90vw", padding: 32, overflow: "auto"
+                }
+              }}
+            >
+              <h2>{modalData.className} - {learningStyleLabels[modalData.styleIdx]}</h2>
+              {/* Tabela de valores por aluno */}
+              <table style={{ width: '100%', marginTop: 24, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Valor (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modalData.students.length === 0 ? (
+                    <tr><td colSpan={2}>Nenhum dado encontrado.</td></tr>
+                  ) : (
+                    modalData.students.map((aluno, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: 8 }}>{aluno.name}</td>
+                        <td style={{ padding: 8 }}>{aluno.percentages ? Number(aluno.percentages[modalData.styleIdx]).toFixed(2) : '-'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div style={{ marginTop: 24, textAlign: 'right' }}>
+                <button onClick={() => setModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              </div>
+            </Modal>
+            {/* Modal para alunos da fatia do gráfico de pizza */}
+            <Modal
+              isOpen={pizzaModal.open}
+              onRequestClose={() => setPizzaModal({ ...pizzaModal, open: false })}
+              contentLabel="Alunos do estilo"
+              style={{
+                content: {
+                  top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.5)', borderRadius: 20,
+                  backgroundColor: '#FFF', width: 500, minHeight: 200,
+                  maxWidth: '90vw', padding: 32, overflow: 'auto'
+                }
+              }}
+            >
+              <h2>Alunos com estilo <b>{learningStyleLabels[pizzaModal.styleIdx]}</b></h2>
+              <table style={{ width: '100%', marginTop: 24, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Turmas</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Predominância (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pizzaModal.alunos.length === 0 ? (
+                    <tr><td colSpan={3}>Nenhum aluno encontrado.</td></tr>
+                  ) : (
+                    pizzaModal.alunos.map((aluno, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: 8 }}>{aluno.name}</td>
+                        <td style={{ padding: 8 }}>{aluno.turmas.join(', ')}</td>
+                        <td style={{ padding: 8 }}>{Number(aluno.valor).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div style={{ marginTop: 24, textAlign: 'right' }}>
+                <button onClick={() => setPizzaModal({ ...pizzaModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              </div>
+            </Modal>
+          </>
+        )}
+      </div>
     </Container>
   );
 };
 
-export default LearningDashboard;
+export default LearningPreferencesDashboard;
 
 /*
   Comentários:
-  - O componente exibe um dashboard com gráfico dos estilos de aprendizagem e um botão para refazer o questionário.
-  - O questionário é exibido em um modal, uma pergunta por vez, com respostas de 1 a 5.
-  - Ao finalizar, calcula e salva as porcentagens de cada estilo.
-  - O gráfico é atualizado com os resultados.
-  - Código simplificado: removidos imports e estados não utilizados, funções compactadas e comentários explicativos.
+  - O componente exibe estatísticas dos estilos de aprendizagem dos alunos do professor, com base no questionário de Honey-Alonso.
+  - Mostra gráficos apenas com a média por turma.
+  - Os dados são buscados via API e os gráficos são atualizados com as informações recebidas.
+  - Código simplificado: removidos estados e funções não utilizados, comentários explicativos.
 */

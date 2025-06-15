@@ -6,6 +6,7 @@ import ReactECharts from "echarts-for-react";
 import { api } from "@/lib/api";
 import './styles.css';
 import Modal from "react-modal";
+import { FaQuestionCircle } from "react-icons/fa";
 
 const intelligenceLabels = [
   'Linguística', 'Lógico-matemática', 'Espacial', 'Corporal-cinestésica',
@@ -133,7 +134,12 @@ const LearningTeacherDashboard = () => {
     <Container>
       <Header/>
       <div style={{ padding: 24 }}>
-        <h1>Estatísticas das Inteligências Múltiplas por Turma</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          Estatísticas das Inteligências Múltiplas por Turma
+          <span style={{ position: 'relative', display: 'inline-block' }}>
+            <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Cada gráfico mostra a média das inteligências predominantes dos alunos de cada turma." />
+          </span>
+        </h1>
         {loading ? (
           <p>Carregando...</p>
         ) : (
@@ -147,7 +153,12 @@ const LearningTeacherDashboard = () => {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'stretch', justifyContent: 'flex-start' }}>
               {classAverages.map((cls, idx) => (
                 <div key={idx} style={{ flex: '1 1 48%', maxWidth: '48%', minWidth: 320, background: 'white', borderRadius: 16, padding: 24, marginBottom: 32, display: 'flex', flexDirection: 'column' }}>
-                  <h2>{cls.className}</h2>
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {cls.className}
+                    <span style={{ position: 'relative', display: 'inline-block' }}>
+                      <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra a média das inteligências dos alunos desta turma." />
+                    </span>
+                  </h2>
                   <ReactECharts 
                     option={{
                       ...baseChartOption,
@@ -234,7 +245,12 @@ const LearningTeacherDashboard = () => {
             </Modal>
             {/* Scatter chart global de todos os alunos */}
             <div style={{ margin: '48px 0 0 0', background: '#fff', borderRadius: 16, padding: 24 }}>
-              <h2 style={{ marginBottom: 16 }}>Distribuição Global dos Alunos (2 inteligências predominantes)</h2>
+              <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Distribuição Global dos Alunos (2 inteligências predominantes)
+                <span style={{ position: 'relative', display: 'inline-block' }}>
+                  <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra a distribuição dos alunos considerando suas duas inteligências mais altas, agrupando-os visualmente." />
+                </span>
+              </h2>
               <ReactECharts
                 option={{
                   tooltip: {
