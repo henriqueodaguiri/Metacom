@@ -29,34 +29,35 @@ const getByName = async (name) => {
 
 const deleteById = async (id) => {
   const text = await prisma.text.findFirst({
-    where: {
-      id
-    }
+    where: { id }
   });
 
   if(!text) {
     throw new AppError("Texto não encontrado!", 404);
   }
 
-  // Inativa o texto
-  await prisma.text.update({
-    where: {
-      id: text.id
-    },
-    data: {
-      active: false
-    }
-  });
+  // Remove todas as performances relacionadas a esse texto
+  await prisma.performance.deleteMany({ where: { textId: id } });
+
+  // Busca todas as questões desse texto
+  const questions = await prisma.question.findMany({ where: { textId: id } });
+  const questionIds = questions.map(q => q.id);
+
+  // Remove todas as respostas relacionadas às questões desse texto
+  if (questionIds.length > 0) {
+    await prisma.answer.deleteMany({ where: { questionId: { in: questionIds } } });
+    await prisma.choice.deleteMany({ where: { questionId: { in: questionIds } } });
+  }
+
+  // Remove todas as questões
+  await prisma.question.deleteMany({ where: { textId: id } });
 
   // Remove o texto de todas as turmas (classText)
-  const classTexts = await prisma.classText.findMany({
-    where: { textId: id }
-  });
+  const classTexts = await prisma.classText.findMany({ where: { textId: id } });
+  await prisma.classText.deleteMany({ where: { textId: id } });
 
-  // Remove todas as entradas de classText para esse texto
-  await prisma.classText.deleteMany({
-    where: { textId: id }
-  });
+  // Remove o texto em si
+  await prisma.text.delete({ where: { id } });
 
   // Atualiza as médias dos alunos das turmas afetadas
   for (const ct of classTexts) {
