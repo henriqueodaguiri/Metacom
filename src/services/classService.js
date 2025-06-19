@@ -311,6 +311,12 @@ const updateGrades = async (classId) => {
     return;
   }
 
+  // Busca todos os alunos da turma
+  const classUsers = await prisma.classUser.findMany({
+    where: { classId }
+  });
+
+  // Busca todas as performances (notas)
   const performances = await prisma.performance.findMany({
     where: {
       classId,
@@ -320,16 +326,15 @@ const updateGrades = async (classId) => {
     }
   });
 
-  const studentsId = new Set(performances.map(x => x.studentId));
-
-  console.log(textIds.length);
-  for(let id of studentsId) {
-    const grade = performances
-      .filter(p => p.studentId === id)
-      .map(p => p.grade)
-      .reduce((sum, curr) => sum + curr, 0);
-      
-    const newGrade = parseFloat((grade / textIds.length).toFixed(2));
+  for (const classUser of classUsers) {
+    const id = classUser.studentId;
+    // Para cada texto, pega a nota ou 0 se não respondeu
+    let total = 0;
+    for (const textId of textIds) {
+      const perf = performances.find(p => p.studentId === id && p.textId === textId);
+      total += perf ? perf.grade : 0;
+    }
+    const newGrade = parseFloat((total / textIds.length).toFixed(2));
     await prisma.classUser.update({
       where: {
         classId_studentId: {

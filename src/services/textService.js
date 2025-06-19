@@ -3,6 +3,7 @@ const AppError = require("@/lib/appError");
 const prisma = require("@/lib/prisma");
 const difficulties = require("@/lib/difficulties");
 const getImageNameFromFireBaseUrl = require("@/lib/urlHelper");
+const classService = require("@/services/classService");
 
 const getByName = async (name) => {
   if(!name) {
@@ -37,6 +38,7 @@ const deleteById = async (id) => {
     throw new AppError("Texto não encontrado!", 404);
   }
 
+  // Inativa o texto
   await prisma.text.update({
     where: {
       id: text.id
@@ -45,6 +47,21 @@ const deleteById = async (id) => {
       active: false
     }
   });
+
+  // Remove o texto de todas as turmas (classText)
+  const classTexts = await prisma.classText.findMany({
+    where: { textId: id }
+  });
+
+  // Remove todas as entradas de classText para esse texto
+  await prisma.classText.deleteMany({
+    where: { textId: id }
+  });
+
+  // Atualiza as médias dos alunos das turmas afetadas
+  for (const ct of classTexts) {
+    await classService.updateGrades(ct.classId);
+  }
 };
 
 const getById = async (id) => {
