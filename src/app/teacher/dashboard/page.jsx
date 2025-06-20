@@ -9,6 +9,7 @@ import { FaQuestionCircle } from "react-icons/fa";
 import { GiRunningShoe, GiThink, GiBookCover, GiGears } from 'react-icons/gi';
 import { FaUserGraduate } from "react-icons/fa";
 import ReactECharts from "echarts-for-react";
+import * as XLSX from "xlsx";
 
 const learningStyleLabels = [
   'Ativo', 'Reflexivo', 'Teórico', 'Pragmático'
@@ -79,6 +80,61 @@ function sugerirAgrupamentosPorEstilo(students) {
     count: grupo.length
   })).filter(g => g.count > 1); // Só sugere grupos com mais de 1 aluno
   return sugestoes;
+}
+
+// Função utilitária para exportar dados para XLSX
+function exportToXLSX(data, columns, filename) {
+  const wsData = [columns.map(col => col.label)];
+  data.forEach(row => {
+    wsData.push(columns.map(col => typeof col.value === 'function' ? col.value(row) : row[col.value]));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.writeFile(wb, filename);
+}
+
+// Função para exportar alunos de uma turma para XLSX
+function exportTurmaToXLSX(turma) {
+  const wsData = [
+    ['Aluno', 'Média'],
+    ...turma.students.map(aluno => [aluno.name, aluno.avg !== undefined && aluno.avg !== null ? Number(aluno.avg).toFixed(2) : '-'])
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, turma.className || 'Turma');
+  XLSX.writeFile(wb, `turma_${turma.className || turma.id}.xlsx`);
+}
+
+// Função para exportar alunos de uma leitura para XLSX
+function exportLeituraToXLSX(text) {
+  const wsData = [
+    ['Aluno', 'Turma', 'Nota'],
+    ...text.students.map(aluno => [aluno.name, aluno.className || '-', aluno.grade !== undefined && aluno.grade !== null ? Number(aluno.grade).toFixed(2) : '-'])
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, text.name || 'Leitura');
+  XLSX.writeFile(wb, `leitura_${text.name || text.id}.xlsx`);
+}
+
+// Função para exportar todos os alunos para XLSX
+function exportTodosAlunosToXLSX(students) {
+  const wsData = [
+    ['Aluno', 'Turmas', 'Inteligência predominante', 'Estilo predominante', 'Leituras respondidas', 'Média das leituras cumpridas'],
+    ...students.map(aluno => [
+      aluno.name,
+      aluno.turmas && aluno.turmas.length > 0 ? aluno.turmas.join(", ") : '-',
+      aluno.inteligenciaPredominante || '-',
+      aluno.estiloPredominante || '-',
+      `${aluno.leiturasRespondidas}/${aluno.totalLeituras !== undefined ? aluno.totalLeituras : '?'}`,
+      aluno.mediaLeituras !== null ? aluno.mediaLeituras : '-'
+    ])
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'TodosAlunos');
+  XLSX.writeFile(wb, 'todos_alunos.xlsx');
 }
 
 const TeacherDashboard = () => {
@@ -280,18 +336,13 @@ const TeacherDashboard = () => {
                     minWidth: 320,
                     flex: '1 1 350px',
                     maxWidth: 420,
-                    position: 'relative', // Adicionado para posicionar os botões absolutamente
-                    paddingBottom: turma.students.length > studentsPerPage ? 80 : 24 // Adiciona espaço extra se houver paginação
+                    position: 'relative',
+                    paddingBottom: turma.students.length > studentsPerPage ? 80 : 24
                   }}>
                     <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{turma.className}</h2>
-                    {/* Média geral da turma */}
-                    <div style={{ color: '#444', fontWeight: 500, marginBottom: 8, fontSize: 16 }}>
-                      Média geral: {turma.students && turma.students.length > 0 ? (
-                        (turma.students.reduce((acc, s) => acc + (typeof s.avg === 'number' ? s.avg : 0), 0) / turma.students.length).toFixed(2)
-                      ) : '-'}
-                    </div>
-                    {/* Botão de ordenação */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                    {/* Botão exportar XLSX turma e select de ordenação na mesma linha */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <button onClick={() => exportTurmaToXLSX(turma)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
                       <select
                         value={turma.sortOrder || 'az'}
                         onChange={e => {
@@ -390,28 +441,25 @@ const TeacherDashboard = () => {
                     minWidth: 320,
                     flex: '1 1 350px',
                     maxWidth: 420,
-                    position: 'relative', // Adicionado para posicionar os botões absolutamente
-                    paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24 // Adiciona espaço extra se houver paginação
+                    position: 'relative',
+                    paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24
                   }}>
-                    <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{text.name}</h2>
-                    {/* Média geral da leitura */}
-                    <div style={{ color: '#444', fontWeight: 500, marginBottom: 8, fontSize: 16 }}>
-                      Média geral: {text.students && text.students.length > 0 ? (
-                        (text.students.reduce((acc, s) => acc + (typeof s.grade === 'number' ? s.grade : 0), 0) / text.students.length).toFixed(2)
-                      ) : '-'}
-                    </div>
-                    {/* Botão alternar alunos/perguntas e select de ordenação (invertidos) */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <h2 style={{ color: '#2980b9', marginBottom: 0 }}>{text.name}</h2>
                       <button
                         style={{
                           background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
                           padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)'
+                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)', marginLeft: 16
                         }}
                         onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))}
                       >
                         {showQuestions[text.id || idx] ? 'Ver alunos' : 'Ver perguntas'}
                       </button>
+                    </div>
+                    {/* Botão exportar XLSX leitura e select de ordenação na mesma linha */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <button onClick={() => exportLeituraToXLSX(text)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
                       <select
                         value={text.sortOrder || 'az'}
                         onChange={e => {
@@ -542,8 +590,9 @@ const TeacherDashboard = () => {
             maxWidth: '100%',
             overflowX: 'auto'
           }}>
-            {/* Ordenação da lista de todos os alunos */}
+            {/* Botão exportar XLSX todos os alunos */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <button onClick={() => exportTodosAlunosToXLSX(filteredStudentsSummary)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', marginRight: 16 }}>Exportar XLSX</button>
               <select
                 value={studentsSummarySort || 'az'}
                 onChange={e => {
@@ -687,7 +736,7 @@ const TeacherDashboard = () => {
                 tooltip: {},
                 radar: {
                   indicator: [
-                    { name: 'Lógico-matemática', max: 100 },
+                    { name: 'Lógico-matematica', max: 100 },
                     { name: 'Linguística', max: 100 },
                     { name: 'Espacial', max: 100 },
                     { name: 'Corporal', max: 100 },
@@ -720,7 +769,7 @@ const TeacherDashboard = () => {
               Inteligência predominante: {(() => {
                 const idx = studentModal.intelligence.findIndex(v => v === Math.max(...studentModal.intelligence));
                 const labels = [
-                  'Lógico-matemática', 'Linguística', 'Espacial', 'Corporal',
+                  'Lógico-matematica', 'Linguística', 'Espacial', 'Corporal',
                   'Musical', 'Interpessoal', 'Intrapessoal', 'Naturalista'
                 ];
                 return idx !== -1 ? labels[idx] : '-';
@@ -855,7 +904,7 @@ const TeacherDashboard = () => {
                 tooltip: {},
                 radar: {
                   indicator: [
-                    { name: 'Lógico-matemática', max: 100 },
+                    { name: 'Lógico-matematica', max: 100 },
                     { name: 'Linguística', max: 100 },
                     { name: 'Espacial', max: 100 },
                     { name: 'Corporal', max: 100 },
@@ -888,7 +937,7 @@ const TeacherDashboard = () => {
               Inteligência predominante: {(() => {
                 const idx = studentTextModal.intelligence.findIndex(v => v === Math.max(...studentTextModal.intelligence));
                 const labels = [
-                  'Lógico-matemática', 'Linguística', 'Espacial', 'Corporal',
+                  'Lógico-matematica', 'Linguística', 'Espacial', 'Corporal',
                   'Musical', 'Interpessoal', 'Intrapessoal', 'Naturalista'
                 ];
                 return idx !== -1 ? labels[idx] : '-';
@@ -974,7 +1023,7 @@ const TeacherDashboard = () => {
                     tooltip: {},
                     radar: {
                       indicator: [
-                        { name: 'Lógico-matemática', max: 100 },
+                        { name: 'Lógico-matematica', max: 100 },
                         { name: 'Linguística', max: 100 },
                         { name: 'Espacial', max: 100 },
                         { name: 'Corporal', max: 100 },
