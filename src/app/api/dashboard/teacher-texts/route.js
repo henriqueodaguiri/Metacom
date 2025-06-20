@@ -47,12 +47,28 @@ export async function GET(req) {
       where: { textId: { in: textIds } },
       include: { choices: true }
     });
+
+    // Busca todas as respostas dos alunos para as perguntas desses textos
+    const allQuestionIds = allQuestions.map(q => q.id);
+    const allAnswers = await prisma.answer.findMany({
+      where: { questionId: { in: allQuestionIds } },
+      select: { questionId: true, studentId: true, choiceId: true }
+    });
+
+    // Organiza respostas por pergunta
+    const answersByQuestion = {};
+    allAnswers.forEach(ans => {
+      if (!answersByQuestion[ans.questionId]) answersByQuestion[ans.questionId] = [];
+      answersByQuestion[ans.questionId].push({ studentId: ans.studentId, choiceId: ans.choiceId });
+    });
+
     allQuestions.forEach(q => {
       if (!questionsByText[q.textId]) questionsByText[q.textId] = [];
       questionsByText[q.textId].push({
         id: q.id,
         statement: q.statement,
-        choices: q.choices.map(c => ({ id: c.id, text: c.text, isCorrect: c.isCorrect }))
+        choices: q.choices.map(c => ({ id: c.id, text: c.text, isCorrect: c.isCorrect })),
+        answers: answersByQuestion[q.id] || [] // <-- respostas dos alunos para esta pergunta
       });
     });
 

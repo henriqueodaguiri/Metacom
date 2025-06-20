@@ -91,6 +91,30 @@ const TeacherDashboard = () => {
   const [studentTextModal, setStudentTextModal] = useState({ open: false, student: null, text: null, questions: [], intelligence: null });
   const [showQuestions, setShowQuestions] = useState({}); // { [textId]: boolean }
 
+  // Paginação para alunos das turmas
+  const [studentsPage, setStudentsPage] = useState({}); // { [classId]: page }
+  const studentsPerPage = 10;
+  // Paginação para alunos das leituras
+  const [textStudentsPage, setTextStudentsPage] = useState({}); // { [textId]: page }
+  const textStudentsPerPage = 10;
+  const [studentsSummary, setStudentsSummary] = useState([]);
+  // Paginação para todos os alunos
+  const [studentsSummaryPage, setStudentsSummaryPage] = useState(0);
+  const studentsSummaryPerPage = 10;
+  // Novo estado para modal de detalhes do aluno do resumo
+  const [studentSummaryModal, setStudentSummaryModal] = useState({ open: false, student: null, intelligence: null, learningStyles: null });
+  const [studentsSummarySort, setStudentsSummarySort] = useState('az');
+
+  // Filtros para cada coluna da lista de todos os alunos
+  const [studentsSummaryFilters, setStudentsSummaryFilters] = useState({
+    name: '',
+    turmas: '',
+    inteligencia: '',
+    estilo: '',
+    leituras: '',
+    media: ''
+  });
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -101,9 +125,13 @@ const TeacherDashboard = () => {
         // Busca todos os textos do professor com alunos e notas (endpoint correto)
         const resTexts = await api.get("/dashboard/teacher-texts");
         setTexts(resTexts.data.texts || []);
+        // Busca resumo de todos os alunos
+        const resSummary = await api.get("/dashboard/teacher-students-summary");
+        setStudentsSummary(resSummary.data.students || []);
       } catch (e) {
         setClasses([]);
         setTexts([]);
+        setStudentsSummary([]);
       }
       setLoading(false);
     }
@@ -168,12 +196,72 @@ const TeacherDashboard = () => {
     }
   }
 
+  // Função para abrir modal de detalhes do aluno do resumo
+  async function handleStudentSummaryClick(aluno) {
+    setLoading(true);
+    try {
+      // Busca email do aluno
+      let email = '-';
+      try {
+        const resUser = await api.get(`/users/${aluno.id}`);
+        // Tenta pegar email em diferentes formatos possíveis e loga a resposta para debug
+        console.log('DEBUG_USER_RES', resUser.data);
+        if (resUser.data?.user?.email) email = resUser.data.user.email;
+        else if (resUser.data?.email) email = resUser.data.email;
+        else if (resUser.data?.result?.email) email = resUser.data.result.email;
+        else if (typeof resUser.data === 'string' && resUser.data.includes('@')) email = resUser.data;
+      } catch (e) {
+        // Se erro 404, mostra mensagem amigável
+        if (e?.response?.status === 404) {
+          alert('Usuário não encontrado na API /users/' + aluno.id + '. Verifique se o endpoint existe e retorna o email.');
+        } else {
+          console.log('DEBUG_USER_EMAIL_ERROR', e);
+        }
+      }
+      // Busca inteligências múltiplas
+      let intelligence = null;
+      try {
+        const res2 = await api.get(`/users/${aluno.id}/intelligence`);
+        if (Array.isArray(res2.data?.result?.percentages)) {
+          intelligence = res2.data.result.percentages;
+        } else if (typeof res2.data?.result?.percentages === 'object' && res2.data?.result?.percentages !== null) {
+          intelligence = Object.values(res2.data.result.percentages).map(Number);
+        }
+      } catch {}
+      // Busca estilos de aprendizagem
+      let learningStyles = null;
+      try {
+        const res3 = await api.get(`/learning_preferences/${aluno.id}`);
+        if (Array.isArray(res3.data?.result?.percentages)) {
+          learningStyles = res3.data.result.percentages;
+        } else if (typeof res3.data?.result?.percentages === 'object' && res3.data?.result?.percentages !== null) {
+          learningStyles = Object.values(res3.data.result.percentages).map(Number);
+        }
+      } catch {}
+      setStudentSummaryModal({ open: true, student: { ...aluno, email }, intelligence, learningStyles });
+    } catch {
+      setStudentSummaryModal({ open: true, student: { ...aluno, email: '-' }, intelligence: null, learningStyles: null });
+    }
+    setLoading(false);
+  }
+
+  // Função para aplicar filtros
+  const filteredStudentsSummary = studentsSummary.filter(aluno => {
+    const nameMatch = studentsSummaryFilters.name === '' || aluno.name.toLowerCase().includes(studentsSummaryFilters.name.toLowerCase());
+    const turmaMatch = studentsSummaryFilters.turmas === '' || (aluno.turmas && aluno.turmas.join(',').toLowerCase().includes(studentsSummaryFilters.turmas.toLowerCase()));
+    const inteligenciaMatch = studentsSummaryFilters.inteligencia === '' || (aluno.inteligenciaPredominante || '').toLowerCase().includes(studentsSummaryFilters.inteligencia.toLowerCase());
+    const estiloMatch = studentsSummaryFilters.estilo === '' || (aluno.estiloPredominante || '').toLowerCase().includes(studentsSummaryFilters.estilo.toLowerCase());
+    const leiturasMatch = studentsSummaryFilters.leituras === '' || (`${aluno.leiturasRespondidas}/${aluno.totalLeituras}`).includes(studentsSummaryFilters.leituras);
+    const mediaMatch = studentsSummaryFilters.media === '' || (aluno.mediaLeituras !== null && String(aluno.mediaLeituras).includes(studentsSummaryFilters.media));
+    return nameMatch && turmaMatch && inteligenciaMatch && estiloMatch && leiturasMatch && mediaMatch;
+  });
+
   return (
     <Container>
       <Header />
       <div style={{ padding: 24 }}>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <FaUserGraduate color="#2980b9" /> Dashboard do Professor
+          <FaUserGraduate color="#2980b9" /> Turmas
         </h1>
         {loading ? (
           <p>Carregando...</p>
@@ -191,7 +279,9 @@ const TeacherDashboard = () => {
                     padding: 24,
                     minWidth: 320,
                     flex: '1 1 350px',
-                    maxWidth: 420
+                    maxWidth: 420,
+                    position: 'relative', // Adicionado para posicionar os botões absolutamente
+                    paddingBottom: turma.students.length > studentsPerPage ? 80 : 24 // Adiciona espaço extra se houver paginação
                   }}>
                     <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{turma.className}</h2>
                     {/* Média geral da turma */}
@@ -212,6 +302,7 @@ const TeacherDashboard = () => {
                               if (order === 'az') return a.name.localeCompare(b.name);
                               if (order === 'za') return b.name.localeCompare(a.name);
                               if (order === 'media') return (b.avg ?? 0) - (a.avg ?? 0);
+                              if (order === 'menor') return (a.avg ?? 0) - (b.avg ?? 0);
                               return 0;
                             });
                             return { ...t, students: sorted, sortOrder: order };
@@ -222,6 +313,7 @@ const TeacherDashboard = () => {
                         <option value="az">A-Z</option>
                         <option value="za">Z-A</option>
                         <option value="media">Maior média</option>
+                        <option value="menor">Menor média</option>
                       </select>
                     </div>
                     {/* Lista de alunos */}
@@ -237,7 +329,7 @@ const TeacherDashboard = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {(expandedCards[turma.id] === true ? turma.students : turma.students.slice(0, 10)).map((aluno) => (
+                            {turma.students.slice((studentsPage[turma.id] || 0) * studentsPerPage, ((studentsPage[turma.id] || 0) + 1) * studentsPerPage).map((aluno) => (
                               <tr key={aluno.id} style={{ cursor: 'pointer' }} onClick={() => handleStudentClick(aluno, turma)}>
                                 <td style={{ padding: 8 }}>{aluno.name}</td>
                                 <td style={{ padding: 8 }}>{aluno.avg !== undefined && aluno.avg !== null ? Number(aluno.avg).toFixed(2) : '-'}</td>
@@ -245,24 +337,28 @@ const TeacherDashboard = () => {
                             ))}
                           </tbody>
                         </table>
-                        {turma.students.length > 10 && (
-                          <div style={{ textAlign: 'center', marginTop: 8 }}>
+                        {turma.students.length > studentsPerPage && (
+                          <div style={{
+                            position: 'static', // Corrigido de 'absolute' para 'static'
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: 8,
+                            zIndex: 2,
+                            marginTop: 24
+                          }}>
                             <button
-                              style={{
-                                background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8,
-                                padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
-                                boxShadow: '0 2px 8px rgba(41,128,185,0.08)'
-                              }}
-                              onClick={() => {
-                                const newState = {};
-                                classes.forEach((t, i) => {
-                                  newState[t.id || i] = !(expandedCards[turma.id || idx] ?? false);
-                                });
-                                setExpandedCards(newState);
-                              }}
-                            >
-                              {expandedCards[turma.id || idx] ? 'Mostrar menos' : 'Expandir lista'}
-                            </button>
+                              style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                              disabled={(studentsPage[turma.id] || 0) === 0}
+                              onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.max(0, (prev[turma.id] || 0) - 1) }))}
+                            >Anterior</button>
+                            <span style={{ alignSelf: 'center', fontWeight: 500 }}>
+                              Página {(studentsPage[turma.id] || 0) + 1} de {Math.ceil(turma.students.length / studentsPerPage)}
+                            </span>
+                            <button
+                              style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                              disabled={((studentsPage[turma.id] || 0) + 1) >= Math.ceil(turma.students.length / studentsPerPage)}
+                              onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.min(Math.ceil(turma.students.length / studentsPerPage) - 1, (prev[turma.id] || 0) + 1) }))}
+                            >Próxima</button>
                           </div>
                         )}
                       </>
@@ -293,7 +389,9 @@ const TeacherDashboard = () => {
                     padding: 24,
                     minWidth: 320,
                     flex: '1 1 350px',
-                    maxWidth: 420
+                    maxWidth: 420,
+                    position: 'relative', // Adicionado para posicionar os botões absolutamente
+                    paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24 // Adiciona espaço extra se houver paginação
                   }}>
                     <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{text.name}</h2>
                     {/* Média geral da leitura */}
@@ -302,8 +400,18 @@ const TeacherDashboard = () => {
                         (text.students.reduce((acc, s) => acc + (typeof s.grade === 'number' ? s.grade : 0), 0) / text.students.length).toFixed(2)
                       ) : '-'}
                     </div>
-                    {/* Botão alternar alunos/perguntas */}
+                    {/* Botão alternar alunos/perguntas e select de ordenação (invertidos) */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <button
+                        style={{
+                          background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
+                          padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)'
+                        }}
+                        onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))}
+                      >
+                        {showQuestions[text.id || idx] ? 'Ver alunos' : 'Ver perguntas'}
+                      </button>
                       <select
                         value={text.sortOrder || 'az'}
                         onChange={e => {
@@ -327,16 +435,6 @@ const TeacherDashboard = () => {
                         <option value="maior">Maior nota</option>
                         <option value="menor">Menor nota</option>
                       </select>
-                      <button
-                        style={{
-                          background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
-                          padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)'
-                        }}
-                        onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))}
-                      >
-                        {showQuestions[text.id || idx] ? 'Ver alunos' : 'Ver perguntas'}
-                      </button>
                     </div>
                     {/* Lista de alunos ou perguntas */}
                     {showQuestions[text.id || idx] ? (
@@ -353,22 +451,11 @@ const TeacherDashboard = () => {
                           </thead>
                           <tbody>
                             {text.questions.map((q, qi) => {
-                              let acertos = 0;
-                              let total = 0;
-                              if (Array.isArray(text.students)) {
-                                text.students.forEach(aluno => {
-                                  if (aluno.questions && Array.isArray(aluno.questions)) {
-                                    const resp = aluno.questions.find(qq => qq.id === q.id);
-                                    if (resp && resp.selectedChoiceId !== undefined && resp.selectedChoiceId !== null) {
-                                      total++;
-                                      const correct = q.choices.find(c => c.isCorrect);
-                                      if (correct && String(resp.selectedChoiceId) === String(correct.id)) {
-                                        acertos++;
-                                      }
-                                    }
-                                  }
-                                });
-                              }
+                              const correctChoice = q.choices.find(c => c.isCorrect);
+                              const total = q.answers ? q.answers.length : 0;
+                              const acertos = q.answers && correctChoice
+                                ? q.answers.filter(a => String(a.choiceId) === String(correctChoice.id)).length
+                                : 0;
                               return (
                                 <tr key={q.id || qi}>
                                   <td style={{ padding: 8 }}>{q.statement}</td>
@@ -395,7 +482,7 @@ const TeacherDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {(expandedTextCards[text.id] === true ? text.students : text.students.slice(0, 10)).map((aluno, i) => (
+                              {text.students.slice((textStudentsPage[text.id] || 0) * textStudentsPerPage, ((textStudentsPage[text.id] || 0) + 1) * textStudentsPerPage).map((aluno, i) => (
                                 <tr key={aluno.id + '-' + aluno.classId + '-' + i} style={{ cursor: 'pointer' }} onClick={() => handleStudentTextClick(aluno, text)}>
                                   <td style={{ padding: 8 }}>{aluno.name}</td>
                                   <td style={{ padding: 8 }}>{aluno.className || '-'}</td>
@@ -404,24 +491,28 @@ const TeacherDashboard = () => {
                               ))}
                             </tbody>
                           </table>
-                          {text.students.length > 10 && (
-                            <div style={{ textAlign: 'center', marginTop: 8 }}>
+                          {text.students.length > textStudentsPerPage && (
+                            <div style={{
+                              position: 'static', // Corrigido de 'absolute' para 'static'
+                              display: 'flex',
+                              justifyContent: 'center',
+                              gap: 8,
+                              zIndex: 2,
+                              marginTop: 24
+                            }}>
                               <button
-                                style={{
-                                  background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8,
-                                  padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
-                                  boxShadow: '0 2px 8px rgba(41,128,185,0.08)'
-                                }}
-                                onClick={() => {
-                                  const newState = {};
-                                  texts.forEach((t, i) => {
-                                    newState[t.id || i] = !(expandedTextCards[text.id || idx] ?? false);
-                                  });
-                                  setExpandedTextCards(newState);
-                                }}
-                              >
-                                {expandedTextCards[text.id || idx] ? 'Mostrar menos' : 'Expandir lista'}
-                              </button>
+                                style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                                disabled={(textStudentsPage[text.id] || 0) === 0}
+                                onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.max(0, (prev[text.id] || 0) - 1) }))}
+                              >Anterior</button>
+                              <span style={{ alignSelf: 'center', fontWeight: 500 }}>
+                                Página {(textStudentsPage[text.id] || 0) + 1} de {Math.ceil(text.students.length / textStudentsPerPage)}
+                              </span>
+                              <button
+                                style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                                disabled={((textStudentsPage[text.id] || 0) + 1) >= Math.ceil(text.students.length / textStudentsPerPage)}
+                                onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.min(Math.ceil(text.students.length / textStudentsPerPage) - 1, (prev[text.id] || 0) + 1) }))}
+                              >Próxima</button>
                             </div>
                           )}
                         </>
@@ -432,6 +523,123 @@ const TeacherDashboard = () => {
               </div>
             )}
           </>
+        )}
+        {/* NOVA SESSÃO: Todos os Alunos */}
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
+          <FaUserGraduate color="#2980b9" /> Todos os Alunos
+        </h1>
+        {loading ? (
+          <p>Carregando...</p>
+        ) : (
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+            padding: 32,
+            marginBottom: 32,
+            position: 'relative',
+            minWidth: 900,
+            maxWidth: '100%',
+            overflowX: 'auto'
+          }}>
+            {/* Ordenação da lista de todos os alunos */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <select
+                value={studentsSummarySort || 'az'}
+                onChange={e => {
+                  const order = e.target.value;
+                  setStudentsSummarySort(order);
+                  setStudentsSummary(prev => {
+                    const sorted = [...prev].sort((a, b) => {
+                      if (order === 'az') return a.name.localeCompare(b.name);
+                      if (order === 'za') return b.name.localeCompare(a.name);
+                      if (order === 'leituras') return (b.leiturasRespondidas ?? 0) - (a.leiturasRespondidas ?? 0);
+                      if (order === 'media') return (b.mediaLeituras ?? 0) - (a.mediaLeituras ?? 0);
+                      return 0;
+                    });
+                    return sorted;
+                  });
+                }}
+                style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
+              >
+                <option value="az">A-Z</option>
+                <option value="za">Z-A</option>
+                <option value="leituras">Mais leituras respondidas</option>
+                <option value="media">Maior média</option>
+              </select>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Aluno</th>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Turmas</th>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Inteligência predominante</th>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Estilo predominante</th>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Leituras respondidas</th>
+                  <th style={{ textAlign: 'left', borderBottom: '2px solid #2980b9', padding: 8 }}>Média das leituras cumpridas</th>
+                </tr>
+                <tr>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.name} onChange={e => setStudentsSummaryFilters(f => ({ ...f, name: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.turmas} onChange={e => setStudentsSummaryFilters(f => ({ ...f, turmas: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.inteligencia} onChange={e => setStudentsSummaryFilters(f => ({ ...f, inteligencia: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.estilo} onChange={e => setStudentsSummaryFilters(f => ({ ...f, estilo: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.leituras} onChange={e => setStudentsSummaryFilters(f => ({ ...f, leituras: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                  <th style={{ padding: 4 }}>
+                    <input type="text" value={studentsSummaryFilters.media} onChange={e => setStudentsSummaryFilters(f => ({ ...f, media: e.target.value }))} placeholder="Filtrar..." style={{ width: '95%', borderRadius: 8 }} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudentsSummary.slice((studentsSummaryPage || 0) * studentsSummaryPerPage, ((studentsSummaryPage || 0) + 1) * studentsSummaryPerPage).map((aluno, i) => (
+                  <tr key={aluno.id} style={{ cursor: 'pointer' }} onClick={() => handleStudentSummaryClick(aluno)}>
+                    <td style={{ padding: 8 }}>{aluno.name}</td>
+                    <td style={{ padding: 8 }}>{aluno.turmas && aluno.turmas.length > 0 ? aluno.turmas.join(", ") : '-'}</td>
+                    <td style={{ padding: 8 }}>{aluno.inteligenciaPredominante || '-'}</td>
+                    <td style={{ padding: 8 }}>{aluno.estiloPredominante || '-'}</td>
+                    <td style={{ padding: 8 }}>
+                      {aluno.leiturasRespondidas}/{aluno.totalLeituras !== undefined ? aluno.totalLeituras : '?'}
+                    </td>
+                    <td style={{ padding: 8 }}>{aluno.mediaLeituras !== null ? aluno.mediaLeituras : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Paginação */}
+            {studentsSummary.length > studentsSummaryPerPage && (
+              <div style={{
+                position: 'static', // Corrigido de 'absolute' para 'static' para não sobrepor modais
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 8,
+                zIndex: 2,
+                marginTop: 24 // Espaço extra para separar da tabela
+              }}>
+                <button
+                  style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                  disabled={(studentsSummaryPage || 0) === 0}
+                  onClick={() => setStudentsSummaryPage(Math.max(0, (studentsSummaryPage || 0) - 1))}
+                >Anterior</button>
+                <span style={{ alignSelf: 'center', fontWeight: 500 }}>
+                  Página {(studentsSummaryPage || 0) + 1} de {Math.ceil(studentsSummary.length / studentsSummaryPerPage)}
+                </span>
+                <button
+                  style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                  disabled={((studentsSummaryPage || 0) + 1) >= Math.ceil(studentsSummary.length / studentsSummaryPerPage)}
+                  onClick={() => setStudentsSummaryPage(Math.min(Math.ceil(studentsSummary.length / studentsSummaryPerPage) - 1, (studentsSummaryPage || 0) + 1))}
+                >Próxima</button>
+              </div>
+            )}
+          </div>
         )}
       </div>
       {/* Modal de notas do aluno */}
@@ -735,6 +943,134 @@ const TeacherDashboard = () => {
         <div style={{ textAlign: 'right', marginTop: 24 }}>
           <button onClick={() => setStudentTextModal({ ...studentTextModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
         </div>
+      </Modal>
+      {/* Modal de detalhes do aluno do resumo */}
+      <Modal
+        isOpen={studentSummaryModal.open}
+        onRequestClose={() => setStudentSummaryModal({ ...studentSummaryModal, open: false })}
+        contentLabel="Detalhes do aluno"
+        style={{
+          content: {
+            top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.5)', borderRadius: 20,
+            backgroundColor: '#FFF', width: 700, minHeight: 300,
+            maxWidth: '98vw', padding: 40, overflow: 'auto'
+          }
+        }}
+      >
+        <h2 style={{ marginTop: 0, marginBottom: 16 }}>Dados do Aluno</h2>
+        {studentSummaryModal.student && (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <strong>Nome:</strong> {studentSummaryModal.student.name}<br />
+              <strong>Email:</strong> {studentSummaryModal.student.email}
+            </div>
+            {/* Radar de inteligências múltiplas */}
+            {studentSummaryModal.intelligence && Array.isArray(studentSummaryModal.intelligence) && studentSummaryModal.intelligence.length === 8 && (
+              <div style={{ margin: '32px 0 0 0' }}>
+                <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Inteligências Múltiplas</h3>
+                <ReactECharts
+                  option={{
+                    tooltip: {},
+                    radar: {
+                      indicator: [
+                        { name: 'Lógico-matemática', max: 100 },
+                        { name: 'Linguística', max: 100 },
+                        { name: 'Espacial', max: 100 },
+                        { name: 'Corporal', max: 100 },
+                        { name: 'Musical', max: 100 },
+                        { name: 'Interpessoal', max: 100 },
+                        { name: 'Intrapessoal', max: 100 },
+                        { name: 'Naturalista', max: 100 },
+                      ],
+                      radius: 90
+                    },
+                    series: [{
+                      name: 'Inteligências Múltiplas',
+                      type: 'radar',
+                      data: [
+                        {
+                          value: studentSummaryModal.intelligence.map(v => Number(v)),
+                          name: 'Inteligências',
+                          areaStyle: { color: 'rgba(41,128,185,0.2)' },
+                          lineStyle: { color: '#2980b9' },
+                          symbol: 'circle',
+                          itemStyle: { color: '#2980b9' }
+                        }
+                      ]
+                    }]
+                  }}
+                  style={{ height: 260, width: '100%' }}
+                />
+              </div>
+            )}
+            {/* Radar de estilos de aprendizagem */}
+            {studentSummaryModal.learningStyles && Array.isArray(studentSummaryModal.learningStyles) && studentSummaryModal.learningStyles.length === 4 && (
+              <div style={{ margin: '32px 0 0 0' }}>
+                <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
+                <ReactECharts
+                  option={{
+                    tooltip: {},
+                    radar: {
+                      indicator: [
+                        { name: 'Ativo', max: 100 },
+                        { name: 'Reflexivo', max: 100 },
+                        { name: 'Teórico', max: 100 },
+                        { name: 'Pragmático', max: 100 },
+                      ],
+                      radius: 90
+                    },
+                    series: [{
+                      name: 'Estilos de Aprendizagem',
+                      type: 'radar',
+                      data: [
+                        {
+                          value: studentSummaryModal.learningStyles.map(v => Number(v)),
+                          name: 'Estilos',
+                          areaStyle: { color: 'rgba(39,174,96,0.2)' },
+                          lineStyle: { color: '#27ae60' },
+                          symbol: 'circle',
+                          itemStyle: { color: '#27ae60' }
+                        }
+                      ]
+                    }]
+                  }}
+                  style={{ height: 260, width: '100%' }}
+                />
+              </div>
+            )}
+            <div style={{ textAlign: 'right', marginTop: 32, display: 'flex', gap: 16, justifyContent: 'flex-end' }}>
+              <button
+                onClick={async () => {
+                  if (!studentSummaryModal.student?.id) return;
+                  if (!window.confirm('Tem certeza que deseja excluir este aluno de todas as suas turmas? Essa ação não pode ser desfeita.')) return;
+                  try {
+                    // Chama endpoint para remover o aluno de todas as turmas do professor
+                    await api.delete(`/dashboard/teacher-remove-student/${studentSummaryModal.student.id}`);
+                    alert('Aluno removido de todas as suas turmas com sucesso!');
+                    setStudentSummaryModal({ ...studentSummaryModal, open: false });
+                    // Atualiza lista de alunos
+                    const resSummary = await api.get('/dashboard/teacher-students-summary');
+                    setStudentsSummary(resSummary.data.students || []);
+                  } catch (e) {
+                    alert('Erro ao remover aluno: ' + (e?.response?.data?.message || e.message || e));
+                  }
+                }}
+                style={{ padding: '8px 24px', borderRadius: 8, background: '#c0392b', color: '#fff', border: 'none', fontWeight: 'bold' }}
+                disabled={!studentSummaryModal.student.id}
+              >Excluir Aluno</button>
+              <button
+                onClick={() => window.open(`mailto:${studentSummaryModal.student.email}`)}
+                style={{ padding: '8px 24px', borderRadius: 8, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold' }}
+                disabled={!studentSummaryModal.student.email || studentSummaryModal.student.email === '-'}
+              >Enviar Email</button>
+              <button
+                onClick={() => setStudentSummaryModal({ ...studentSummaryModal, open: false })}
+                style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}
+              >Fechar</button>
+            </div>
+          </>
+        )}
       </Modal>
     </Container>
   );
