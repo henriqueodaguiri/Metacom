@@ -269,16 +269,16 @@ async function createArmstrongIntelligences() {
 async function createLearningDataForStudents() {
   const students = await prisma.user.findMany({
     where: { role: "STUDENT" },
+    orderBy: { id: 'asc' } // Garante ordem estável
   });
 
   for (let idx = 0; idx < students.length; idx++) {
     const student = students[idx];
     // LearningResult (Inventário das Inteligências Múltiplas)
-    // Gera 8 valores aleatórios que somam 100
-    let lr = Array(8).fill(0).map(() => Math.random());
+    // Gera 8 valores aleatórios que somam 100, mas com padrão diferente para cada estudante
+    let lr = Array(8).fill(0).map((_, i) => Math.random() + (i === idx % 8 ? 1.5 : 0));
     const lrSum = lr.reduce((a, b) => a + b, 0);
     lr = lr.map(v => Number(((v / lrSum) * 100).toFixed(2)));
-    // Ajusta o último valor para garantir soma 100
     lr[7] = Number((100 - lr.slice(0, 7).reduce((a, b) => a + b, 0)).toFixed(2));
     await prisma.learningResult.upsert({
       where: { userId: student.id },
@@ -290,8 +290,8 @@ async function createLearningDataForStudents() {
       },
     });
     // LearningPreferences (CHAEA)
-    // Gera 4 valores aleatórios que somam 100
-    let lp = Array(4).fill(0).map(() => Math.random());
+    // Gera 4 valores aleatórios que somam 100, padrão diferente para cada estudante
+    let lp = Array(4).fill(0).map((_, i) => Math.random() + (i === idx % 4 ? 1.5 : 0));
     const lpSum = lp.reduce((a, b) => a + b, 0);
     lp = lp.map(v => Number(((v / lpSum) * 100).toFixed(2)));
     lp[3] = Number((100 - lp.slice(0, 3).reduce((a, b) => a + b, 0)).toFixed(2));
