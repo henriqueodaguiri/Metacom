@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { api } from "@/lib/api";
 import './styles.css';
 import Modal from "react-modal";
-import { FaQuestionCircle } from "react-icons/fa";
+import { FaQuestionCircle, FaBook, FaUsers } from "react-icons/fa";
 import { GiRunningShoe, GiThink, GiBookCover, GiGears } from 'react-icons/gi';
 import { FaUserGraduate } from "react-icons/fa";
 import ReactECharts from "echarts-for-react";
@@ -317,7 +317,7 @@ const TeacherDashboard = () => {
       <Header />
       <div style={{ padding: 24 }}>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <FaUserGraduate color="#2980b9" /> Turmas
+          <FaUsers color="#2980b9" /> Turmas
         </h1>
         {loading ? (
           <p>Carregando...</p>
@@ -422,7 +422,7 @@ const TeacherDashboard = () => {
         )}
         {/* NOVA SESSÃO: Leituras */}
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
-          <FaQuestionCircle color="#2980b9" /> Leituras
+          <FaBook color="#2980b9" /> Leituras
         </h1>
         {loading ? (
           <p>Carregando...</p>
@@ -573,9 +573,6 @@ const TeacherDashboard = () => {
           </>
         )}
         {/* NOVA SESSÃO: Todos os Alunos */}
-        <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
-          <FaUserGraduate color="#2980b9" /> Todos os Alunos
-        </h1>
         {loading ? (
           <p>Carregando...</p>
         ) : (
@@ -588,8 +585,13 @@ const TeacherDashboard = () => {
             position: 'relative',
             minWidth: 900,
             maxWidth: '100%',
-            overflowX: 'auto'
+            overflowX: 'auto',
+            marginTop: 40 // Espaçamento extra para separar dos cards acima
           }}>
+            {/* Título dentro do card */}
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 0, marginBottom: 24 }}>
+              <FaUserGraduate color="#2980b9" /> Todos os Alunos
+            </h1>
             {/* Botão exportar XLSX todos os alunos */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
               <button onClick={() => exportTodosAlunosToXLSX(filteredStudentsSummary)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', marginRight: 16 }}>Exportar XLSX</button>
