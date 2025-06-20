@@ -86,6 +86,10 @@ const TeacherDashboard = () => {
   const [classes, setClasses] = useState([]); // [{ id, className, students: [{ id, name, avg }] }]
   const [expandedCards, setExpandedCards] = useState({}); // { [classId]: boolean }
   const [studentModal, setStudentModal] = useState({ open: false, student: null, texts: [], grades: [], intelligence: null });
+  const [texts, setTexts] = useState([]); // [{ id, name, students: [{ id, name, grade }] }]
+  const [expandedTextCards, setExpandedTextCards] = useState({});
+  const [studentTextModal, setStudentTextModal] = useState({ open: false, student: null, text: null, questions: [], intelligence: null });
+  const [showQuestions, setShowQuestions] = useState({}); // { [textId]: boolean }
 
   useEffect(() => {
     async function fetchData() {
@@ -94,8 +98,12 @@ const TeacherDashboard = () => {
         // Busca as turmas do professor, cada uma com alunos e média (class_user.avg)
         const res = await api.get("/dashboard/teacher-classes");
         setClasses(res.data.classes || []);
+        // Busca todos os textos do professor com alunos e notas (endpoint correto)
+        const resTexts = await api.get("/dashboard/teacher-texts");
+        setTexts(resTexts.data.texts || []);
       } catch (e) {
         setClasses([]);
+        setTexts([]);
       }
       setLoading(false);
     }
@@ -134,6 +142,29 @@ const TeacherDashboard = () => {
       setStudentModal({ open: true, student: { ...student, learningStyles }, texts, grades, intelligence });
     } catch {
       setStudentModal({ open: true, student, texts: [], grades: [], intelligence: null });
+    }
+  }
+
+  async function handleStudentTextClick(student, text) {
+    try {
+      // Busca detalhes do texto e respostas do aluno
+      const res = await api.get(`/classText/${student.classId}/${text.id}?studentId=${student.id}`);
+      const classText = res.data.classText;
+      // Busca inteligências múltiplas do aluno
+      let intelligence = null;
+      try {
+        const res2 = await api.get(`/users/${student.id}/intelligence`);
+        intelligence = res2.data?.result?.percentages || null;
+      } catch {}
+      // Busca estilos de aprendizagem do aluno
+      let learningStyles = null;
+      try {
+        const res3 = await api.get(`/learning_preferences/${student.id}`);
+        learningStyles = res3.data?.result?.percentages || null;
+      } catch {}
+      setStudentTextModal({ open: true, student: { ...student, learningStyles }, text, questions: classText.questions, intelligence });
+    } catch {
+      setStudentTextModal({ open: true, student, text, questions: [], intelligence: null });
     }
   }
 
@@ -242,8 +273,167 @@ const TeacherDashboard = () => {
             )}
           </>
         )}
+        {/* NOVA SESSÃO: Leituras */}
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
+          <FaQuestionCircle color="#2980b9" /> Leituras
+        </h1>
+        {loading ? (
+          <p>Carregando...</p>
+        ) : (
+          <>
+            {texts.length === 0 ? (
+              <p>Nenhuma leitura encontrada.</p>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
+                {texts.map((text, idx) => (
+                  <div key={text.id || idx} style={{
+                    background: '#f6f8fa',
+                    borderRadius: 16,
+                    boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+                    padding: 24,
+                    minWidth: 320,
+                    flex: '1 1 350px',
+                    maxWidth: 420
+                  }}>
+                    <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{text.name}</h2>
+                    {/* Média geral da leitura */}
+                    <div style={{ color: '#444', fontWeight: 500, marginBottom: 8, fontSize: 16 }}>
+                      Média geral: {text.students && text.students.length > 0 ? (
+                        (text.students.reduce((acc, s) => acc + (typeof s.grade === 'number' ? s.grade : 0), 0) / text.students.length).toFixed(2)
+                      ) : '-'}
+                    </div>
+                    {/* Botão alternar alunos/perguntas */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <select
+                        value={text.sortOrder || 'az'}
+                        onChange={e => {
+                          const order = e.target.value;
+                          setTexts(prev => prev.map((t, i) => {
+                            if ((t.id || i) !== (text.id || idx)) return t;
+                            const sorted = [...t.students].sort((a, b) => {
+                              if (order === 'az') return a.name.localeCompare(b.name);
+                              if (order === 'za') return b.name.localeCompare(a.name);
+                              if (order === 'maior') return (b.grade ?? 0) - (a.grade ?? 0);
+                              if (order === 'menor') return (a.grade ?? 0) - (b.grade ?? 0);
+                              return 0;
+                            });
+                            return { ...t, students: sorted, sortOrder: order };
+                          }));
+                        }}
+                        style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
+                      >
+                        <option value="az">A-Z</option>
+                        <option value="za">Z-A</option>
+                        <option value="maior">Maior nota</option>
+                        <option value="menor">Menor nota</option>
+                      </select>
+                      <button
+                        style={{
+                          background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
+                          padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)'
+                        }}
+                        onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))}
+                      >
+                        {showQuestions[text.id || idx] ? 'Ver alunos' : 'Ver perguntas'}
+                      </button>
+                    </div>
+                    {/* Lista de alunos ou perguntas */}
+                    {showQuestions[text.id || idx] ? (
+                      (!text.questions || text.questions.length === 0) ? (
+                        <p style={{ color: '#888' }}>Nenhuma pergunta cadastrada para esta leitura.</p>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Pergunta</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Acertos</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Total respostas</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {text.questions.map((q, qi) => {
+                              let acertos = 0;
+                              let total = 0;
+                              if (Array.isArray(text.students)) {
+                                text.students.forEach(aluno => {
+                                  if (aluno.questions && Array.isArray(aluno.questions)) {
+                                    const resp = aluno.questions.find(qq => qq.id === q.id);
+                                    if (resp && resp.selectedChoiceId !== undefined && resp.selectedChoiceId !== null) {
+                                      total++;
+                                      const correct = q.choices.find(c => c.isCorrect);
+                                      if (correct && String(resp.selectedChoiceId) === String(correct.id)) {
+                                        acertos++;
+                                      }
+                                    }
+                                  }
+                                });
+                              }
+                              return (
+                                <tr key={q.id || qi}>
+                                  <td style={{ padding: 8 }}>{q.statement}</td>
+                                  <td style={{ padding: 8, color: '#27ae60', fontWeight: 500 }}>{acertos}</td>
+                                  <td style={{ padding: 8 }}>{total}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )
+                    ) : (
+                      // Lista de alunos
+                      (!text.students || text.students.length === 0) ? (
+                        <p style={{ color: '#888' }}>Nenhum aluno respondeu esta leitura.</p>
+                      ) : (
+                        <>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr>
+                                <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
+                                <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Turma</th>
+                                <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Nota</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(expandedTextCards[text.id] === true ? text.students : text.students.slice(0, 10)).map((aluno, i) => (
+                                <tr key={aluno.id + '-' + aluno.classId + '-' + i} style={{ cursor: 'pointer' }} onClick={() => handleStudentTextClick(aluno, text)}>
+                                  <td style={{ padding: 8 }}>{aluno.name}</td>
+                                  <td style={{ padding: 8 }}>{aluno.className || '-'}</td>
+                                  <td style={{ padding: 8 }}>{aluno.grade !== undefined && aluno.grade !== null ? Number(aluno.grade).toFixed(2) : '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {text.students.length > 10 && (
+                            <div style={{ textAlign: 'center', marginTop: 8 }}>
+                              <button
+                                style={{
+                                  background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8,
+                                  padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
+                                  boxShadow: '0 2px 8px rgba(41,128,185,0.08)'
+                                }}
+                                onClick={() => {
+                                  const newState = {};
+                                  texts.forEach((t, i) => {
+                                    newState[t.id || i] = !(expandedTextCards[text.id || idx] ?? false);
+                                  });
+                                  setExpandedTextCards(newState);
+                                }}
+                              >
+                                {expandedTextCards[text.id || idx] ? 'Mostrar menos' : 'Expandir lista'}
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
-
       {/* Modal de notas do aluno */}
       <Modal
         isOpen={studentModal.open}
@@ -376,6 +566,174 @@ const TeacherDashboard = () => {
         )}
         <div style={{ textAlign: 'right', marginTop: 24 }}>
           <button onClick={() => setStudentModal({ ...studentModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+        </div>
+      </Modal>
+      {/* Modal detalhado do aluno para leitura */}
+      <Modal
+        isOpen={studentTextModal.open}
+        onRequestClose={() => setStudentTextModal({ ...studentTextModal, open: false })}
+        contentLabel="Detalhes do aluno na leitura"
+        style={{
+          content: {
+            top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.5)', borderRadius: 20,
+            backgroundColor: '#FFF', width: 700, minHeight: 300,
+            maxWidth: '98vw', padding: 40, overflow: 'auto'
+          }
+        }}
+      >
+        <h2 style={{ marginTop: 0, marginBottom: 16 }}>Desempenho de {studentTextModal.student?.name} em "{studentTextModal.text?.name}"</h2>
+        {/* Tabela de perguntas */}
+        {studentTextModal.questions.length === 0 ? (
+          <p>Nenhuma resposta encontrada para este aluno nesta leitura.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Pergunta</th>
+                <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Acertou?</th>
+              </tr>
+            </thead>
+            <tbody>
+              {studentTextModal.questions.map((q, i) => {
+                const correctChoice = q.choices.find(c => c.isCorrect);
+                // LOG DETALHADO: Mostra todos os campos e valores da pergunta para identificar onde está a resposta do aluno
+                if (typeof window !== 'undefined') {
+                  Object.entries(q).forEach(([k, v]) => {
+                    console.log('Q_FIELD', k, v);
+                  });
+                  console.log('Q_FULL', q);
+                }
+                let selectedId = null;
+                if (q.selectedChoiceId !== undefined && q.selectedChoiceId !== null) {
+                  selectedId = q.selectedChoiceId;
+                } else if (q.selectedChoice && q.selectedChoice.id !== undefined && q.selectedChoice.id !== null) {
+                  selectedId = q.selectedChoice.id;
+                } else if (q.answerId !== undefined && q.answerId !== null) {
+                  selectedId = q.answerId;
+                } else if (q.answer && q.answer.id !== undefined && q.answer.id !== null) {
+                  selectedId = q.answer.id;
+                } else if (q.selectedChoice && typeof q.selectedChoice === 'number') {
+                  selectedId = q.selectedChoice;
+                } else if (q.selectedChoice && typeof q.selectedChoice === 'string') {
+                  selectedId = q.selectedChoice;
+                }
+                let acertou = false;
+                if (correctChoice && selectedId !== null) {
+                  acertou = String(selectedId) === String(correctChoice.id);
+                }
+                let resposta = '-';
+                if (selectedId === null) {
+                  resposta = 'Não respondida';
+                } else {
+                  resposta = acertou ? 'Sim' : 'Não';
+                }
+                return (
+                  <tr key={i}>
+                    <td style={{ padding: 8 }}>{q.statement}</td>
+                    <td style={{ padding: 8, color: acertou ? '#27ae60' : (selectedId === null ? '#888' : '#c0392b'), fontWeight: 500 }}>{resposta}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        {/* Radar de inteligências múltiplas */}
+        {studentTextModal.intelligence && (
+          <div style={{ margin: '48px 0 0 0' }}>
+            <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Inteligências Múltiplas</h3>
+            <ReactECharts
+              option={{
+                tooltip: {},
+                radar: {
+                  indicator: [
+                    { name: 'Lógico-matemática', max: 100 },
+                    { name: 'Linguística', max: 100 },
+                    { name: 'Espacial', max: 100 },
+                    { name: 'Corporal', max: 100 },
+                    { name: 'Musical', max: 100 },
+                    { name: 'Interpessoal', max: 100 },
+                    { name: 'Intrapessoal', max: 100 },
+                    { name: 'Naturalista', max: 100 },
+                  ],
+                  radius: 90
+                },
+                series: [{
+                  name: 'Inteligências Múltiplas',
+                  type: 'radar',
+                  data: [
+                    {
+                      value: studentTextModal.intelligence.map(v => Number(v)),
+                      name: 'Inteligências',
+                      areaStyle: { color: 'rgba(41,128,185,0.2)' },
+                      lineStyle: { color: '#2980b9' },
+                      symbol: 'circle',
+                      itemStyle: { color: '#2980b9' }
+                    }
+                  ]
+                }]
+              }}
+              style={{ height: 260, width: '100%' }}
+            />
+            {/* Inteligência predominante */}
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#2980b9', textAlign: 'center' }}>
+              Inteligência predominante: {(() => {
+                const idx = studentTextModal.intelligence.findIndex(v => v === Math.max(...studentTextModal.intelligence));
+                const labels = [
+                  'Lógico-matemática', 'Linguística', 'Espacial', 'Corporal',
+                  'Musical', 'Interpessoal', 'Intrapessoal', 'Naturalista'
+                ];
+                return idx !== -1 ? labels[idx] : '-';
+              })()}
+            </div>
+          </div>
+        )}
+        {/* Radar de estilos de aprendizagem */}
+        {studentTextModal.student?.learningStyles && Array.isArray(studentTextModal.student.learningStyles) && (
+          <div style={{ margin: '48px 0 0 0' }}>
+            <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
+            <ReactECharts
+              option={{
+                tooltip: {},
+                radar: {
+                  indicator: [
+                    { name: 'Ativo', max: 100 },
+                    { name: 'Reflexivo', max: 100 },
+                    { name: 'Teórico', max: 100 },
+                    { name: 'Pragmático', max: 100 },
+                  ],
+                  radius: 90
+                },
+                series: [{
+                  name: 'Estilos de Aprendizagem',
+                  type: 'radar',
+                  data: [
+                    {
+                      value: studentTextModal.student.learningStyles.map(v => Number(v)),
+                      name: 'Estilos',
+                      areaStyle: { color: 'rgba(39,174,96,0.2)' },
+                      lineStyle: { color: '#27ae60' },
+                      symbol: 'circle',
+                      itemStyle: { color: '#27ae60' }
+                    }
+                  ]
+                }]
+              }}
+              style={{ height: 260, width: '100%' }}
+            />
+            {/* Estilo predominante */}
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#27ae60', textAlign: 'center' }}>
+              Estilo predominante: {(() => {
+                const arr = studentTextModal.student.learningStyles;
+                const idx = arr.findIndex(v => v === Math.max(...arr));
+                const labels = ['Ativo', 'Reflexivo', 'Teórico', 'Pragmático'];
+                return idx !== -1 ? labels[idx] : '-';
+              })()}
+            </div>
+          </div>
+        )}
+        <div style={{ textAlign: 'right', marginTop: 24 }}>
+          <button onClick={() => setStudentTextModal({ ...studentTextModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
         </div>
       </Modal>
     </Container>

@@ -38,6 +38,8 @@ const show = async (classId, textId, studentId) => {
     });
 
     question.choices = choices;
+    // Inicializa selectedChoiceId como null
+    question.selectedChoiceId = null;
     const answer = await prisma.answer.findFirst({
       where: {
         questionId: question.id,

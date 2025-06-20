@@ -7,10 +7,14 @@ const classTextController = require("@/controllers/classTextController");
 export async function GET(req, { params }) {
   try {
     const { userId } = verifyToken(req);
-    verifyRole(roles.STUDENT);
+    // Permite acesso para professor e aluno
+    verifyRole([roles.STUDENT, roles.TEACHER]);
     const classId = Number(params.classId);
     const textId = Number(params.textId);
-    return await classTextController.show(classId, textId, userId);
+    // Novo: permite passar studentId via query para o professor
+    const url = new URL(req.url, 'http://localhost');
+    const studentId = url.searchParams.get('studentId') ? Number(url.searchParams.get('studentId')) : userId;
+    return await classTextController.show(classId, textId, studentId);
   } catch(error) {
     return handleError(error);
   }
