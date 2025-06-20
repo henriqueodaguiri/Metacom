@@ -749,7 +749,7 @@ const TeacherDashboard = () => {
         {/* Radar de inteligências múltiplas */}
         {studentModal.intelligence && (
           <div style={{ margin: '48px 0 0 0' }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Inteligências Múltiplas</h3>
+            <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Inteligências Múltiplas</h3>
             <ReactECharts
               option={{
                 tooltip: {},
@@ -773,10 +773,10 @@ const TeacherDashboard = () => {
                     {
                       value: studentModal.intelligence.map(v => Number(v)),
                       name: 'Inteligências',
-                      areaStyle: { color: 'rgba(41,128,185,0.2)' },
-                      lineStyle: { color: '#2980b9' },
+                      areaStyle: { color: 'rgba(39,174,96,0.2)' },
+                      lineStyle: { color: '#27ae60' },
                       symbol: 'circle',
-                      itemStyle: { color: '#2980b9' }
+                      itemStyle: { color: '#27ae60' }
                     }
                   ]
                 }]
@@ -784,7 +784,7 @@ const TeacherDashboard = () => {
               style={{ height: 260, width: '100%' }}
             />
             {/* Inteligência predominante */}
-            <div style={{ marginTop: 8, fontWeight: 500, color: '#2980b9', textAlign: 'center' }}>
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#27ae60', textAlign: 'center' }}>
               Inteligência predominante: {(() => {
                 const idx = studentModal.intelligence.findIndex(v => v === Math.max(...studentModal.intelligence));
                 const labels = [
@@ -799,7 +799,7 @@ const TeacherDashboard = () => {
         {/* Radar de estilos de aprendizagem */}
         {studentModal.student?.learningStyles && Array.isArray(studentModal.student.learningStyles) && (
           <div style={{ margin: '48px 0 0 0' }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
+            <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
             <ReactECharts
               option={{
                 tooltip: {},
@@ -819,10 +819,10 @@ const TeacherDashboard = () => {
                     {
                       value: studentModal.student.learningStyles.map(v => Number(v)),
                       name: 'Estilos',
-                      areaStyle: { color: 'rgba(39,174,96,0.2)' },
-                      lineStyle: { color: '#27ae60' },
+                      areaStyle: { color: 'rgba(41,128,185,0.2)' },
+                      lineStyle: { color: '#2980b9' },
                       symbol: 'circle',
-                      itemStyle: { color: '#27ae60' }
+                      itemStyle: { color: '#2980b9' }
                     }
                   ]
                 }]
@@ -830,7 +830,7 @@ const TeacherDashboard = () => {
               style={{ height: 260, width: '100%' }}
             />
             {/* Estilo predominante */}
-            <div style={{ marginTop: 8, fontWeight: 500, color: '#27ae60', textAlign: 'center' }}>
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#2980b9', textAlign: 'center' }}>
               Estilo predominante: {(() => {
                 const arr = studentModal.student.learningStyles;
                 const idx = arr.findIndex(v => v === Math.max(...arr));
@@ -917,7 +917,7 @@ const TeacherDashboard = () => {
         {/* Radar de inteligências múltiplas */}
         {studentTextModal.intelligence && (
           <div style={{ margin: '48px 0 0 0' }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Inteligências Múltiplas</h3>
+            <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Inteligências Múltiplas</h3>
             <ReactECharts
               option={{
                 tooltip: {},
@@ -941,10 +941,10 @@ const TeacherDashboard = () => {
                     {
                       value: studentTextModal.intelligence.map(v => Number(v)),
                       name: 'Inteligências',
-                      areaStyle: { color: 'rgba(41,128,185,0.2)' },
-                      lineStyle: { color: '#2980b9' },
+                      areaStyle: { color: 'rgba(39,174,96,0.2)' },
+                      lineStyle: { color: '#27ae60' },
                       symbol: 'circle',
-                      itemStyle: { color: '#2980b9' }
+                      itemStyle: { color: '#27ae60' }
                     }
                   ]
                 }]
@@ -952,7 +952,7 @@ const TeacherDashboard = () => {
               style={{ height: 260, width: '100%' }}
             />
             {/* Inteligência predominante */}
-            <div style={{ marginTop: 8, fontWeight: 500, color: '#2980b9', textAlign: 'center' }}>
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#27ae60', textAlign: 'center' }}>
               Inteligência predominante: {(() => {
                 const idx = studentTextModal.intelligence.findIndex(v => v === Math.max(...studentTextModal.intelligence));
                 const labels = [
@@ -967,7 +967,7 @@ const TeacherDashboard = () => {
         {/* Radar de estilos de aprendizagem */}
         {studentTextModal.student?.learningStyles && Array.isArray(studentTextModal.student.learningStyles) && (
           <div style={{ margin: '48px 0 0 0' }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
+            <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
             <ReactECharts
               option={{
                 tooltip: {},
@@ -987,10 +987,10 @@ const TeacherDashboard = () => {
                     {
                       value: studentTextModal.student.learningStyles.map(v => Number(v)),
                       name: 'Estilos',
-                      areaStyle: { color: 'rgba(39,174,96,0.2)' },
-                      lineStyle: { color: '#27ae60' },
+                      areaStyle: { color: 'rgba(41,128,185,0.2)' },
+                      lineStyle: { color: '#2980b9' },
                       symbol: 'circle',
-                      itemStyle: { color: '#27ae60' }
+                      itemStyle: { color: '#2980b9' }
                     }
                   ]
                 }]
@@ -998,7 +998,7 @@ const TeacherDashboard = () => {
               style={{ height: 260, width: '100%' }}
             />
             {/* Estilo predominante */}
-            <div style={{ marginTop: 8, fontWeight: 500, color: '#27ae60', textAlign: 'center' }}>
+            <div style={{ marginTop: 8, fontWeight: 500, color: '#2980b9', textAlign: 'center' }}>
               Estilo predominante: {(() => {
                 const arr = studentTextModal.student.learningStyles;
                 const idx = arr.findIndex(v => v === Math.max(...arr));
@@ -1036,7 +1036,7 @@ const TeacherDashboard = () => {
             {/* Radar de inteligências múltiplas */}
             {studentSummaryModal.intelligence && Array.isArray(studentSummaryModal.intelligence) && studentSummaryModal.intelligence.length === 8 && (
               <div style={{ margin: '32px 0 0 0' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Inteligências Múltiplas</h3>
+                <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Inteligências Múltiplas</h3>
                 <ReactECharts
                   option={{
                     tooltip: {},
@@ -1060,10 +1060,10 @@ const TeacherDashboard = () => {
                         {
                           value: studentSummaryModal.intelligence.map(v => Number(v)),
                           name: 'Inteligências',
-                          areaStyle: { color: 'rgba(41,128,185,0.2)' },
-                          lineStyle: { color: '#2980b9' },
+                          areaStyle: { color: 'rgba(39,174,96,0.2)' },
+                          lineStyle: { color: '#27ae60' },
                           symbol: 'circle',
-                          itemStyle: { color: '#2980b9' }
+                          itemStyle: { color: '#27ae60' }
                         }
                       ]
                     }]
@@ -1075,7 +1075,7 @@ const TeacherDashboard = () => {
             {/* Radar de estilos de aprendizagem */}
             {studentSummaryModal.learningStyles && Array.isArray(studentSummaryModal.learningStyles) && studentSummaryModal.learningStyles.length === 4 && (
               <div style={{ margin: '32px 0 0 0' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#27ae60', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
+                <h3 style={{ margin: '0 0 12px 0', color: '#2980b9', textAlign: 'center' }}>Estilos de Aprendizagem</h3>
                 <ReactECharts
                   option={{
                     tooltip: {},
@@ -1095,10 +1095,10 @@ const TeacherDashboard = () => {
                         {
                           value: studentSummaryModal.learningStyles.map(v => Number(v)),
                           name: 'Estilos',
-                          areaStyle: { color: 'rgba(39,174,96,0.2)' },
-                          lineStyle: { color: '#27ae60' },
+                          areaStyle: { color: 'rgba(41,128,185,0.2)' },
+                          lineStyle: { color: '#2980b9' },
                           symbol: 'circle',
-                          itemStyle: { color: '#27ae60' }
+                          itemStyle: { color: '#2980b9' }
                         }
                       ]
                     }]

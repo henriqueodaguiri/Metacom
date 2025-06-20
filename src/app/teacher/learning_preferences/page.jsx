@@ -155,7 +155,7 @@ const LearningPreferencesDashboard = () => {
 
   return (
     <Container>
-      <Header/>
+      <Header />
       <div style={{ padding: 24 }}>
         {/* Botão de explicação sobre estilos de aprendizagem */}
         <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0 16px 0' }}>
@@ -201,7 +201,7 @@ const LearningPreferencesDashboard = () => {
                 onClick={() => setStyleInfoModal({ open: true, idx })}
                 title={label}
               >
-                <Icon size={48} color={['#2980b9','#16a085','#e67e22','#c0392b'][idx]} />
+                <Icon size={48} color={['#2980b9', '#16a085', '#e67e22', '#c0392b'][idx]} />
                 <span style={{ marginTop: 16, fontWeight: 'bold', fontSize: 18, color: '#444', textAlign: 'center' }}>{label}</span>
               </div>
             );
@@ -245,7 +245,7 @@ const LearningPreferencesDashboard = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
                 {(() => {
                   const Icon = learningStyleIcons[styleInfoModal.idx];
-                  return <Icon size={40} color={['#2980b9','#16a085','#e67e22','#c0392b'][styleInfoModal.idx]} />;
+                  return <Icon size={40} color={['#2980b9', '#16a085', '#e67e22', '#c0392b'][styleInfoModal.idx]} />;
                 })()}
                 <h2 style={{ margin: 0 }}>{learningStyleLabels[styleInfoModal.idx]}</h2>
               </div>
@@ -267,7 +267,7 @@ const LearningPreferencesDashboard = () => {
             {classAverages.length === 0 && (
               <>
                 <p>Nenhuma turma encontrada.</p>
-                <pre style={{background:'#eee',padding:8}}>{JSON.stringify({studentsAvg, classAverages}, null, 2)}</pre>
+                <pre style={{ background: '#eee', padding: 8 }}>{JSON.stringify({ studentsAvg, classAverages }, null, 2)}</pre>
               </>
             )}
             {/* Gráficos das turmas */}
@@ -280,11 +280,29 @@ const LearningPreferencesDashboard = () => {
                       <FaQuestionCircle style={{ color: '#2980b9', cursor: 'pointer' }} title="Este gráfico mostra a média dos estilos de aprendizagem dos alunos desta turma." />
                     </span>
                   </h2>
-                  <ReactECharts 
+                  <ReactECharts
                     option={{
                       ...baseChartOption,
-                      series: [{ ...baseChartOption.series[0], data: cls.avg }]
-                    }} 
+                      series: [{
+                        ...baseChartOption.series[0],
+                        data: cls.avg,
+                        itemStyle: {
+                          color: function(params) {
+                            return ['#2980b9', '#16a085', '#e67e22', '#c0392b'][params.dataIndex];
+                          }
+                        },
+                        label: {
+                          show: true,
+                          position: 'right',
+                          fontWeight: 'bold',
+                          fontSize: 15,
+                          formatter: function(params) {
+                            return params.value > 0 ? params.value.toFixed(2) : '';
+                          }
+                        },
+                        barWidth: 30 // Volta para largura mais padrão
+                      }]
+                    }}
                     style={{ height: 320, width: '100%' }}
                     onEvents={{
                       click: (params) => handleBarClick(params, cls)
@@ -303,7 +321,7 @@ const LearningPreferencesDashboard = () => {
                         <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
                           {indices.map(idx2 => (
                             <li key={idx2}>
-                              <b>{learningStyleLabels[idx2]}</b>: {learningStyleExplanations[idx2] ? learningStyleExplanations[idx2].split(':').slice(1).join(':').trim() : 'Descrição não encontrada.'}<br/>
+                              <b>{learningStyleLabels[idx2]}</b>: {learningStyleExplanations[idx2] ? learningStyleExplanations[idx2].split(':').slice(1).join(':').trim() : 'Descrição não encontrada.'}<br />
                               <span style={{ color: '#2980b9', fontStyle: 'italic' }}>{learningStyleHowPrefers[idx2] || ''}</span>
                             </li>
                           ))}
@@ -327,59 +345,72 @@ const LearningPreferencesDashboard = () => {
                 display: 'block'
               }}>
                 {/* Gráfico de agrupamento por estilo */}
-                <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 24px auto' }}>
-                  <ReactECharts
-                    option={{
-                      tooltip: { trigger: 'item', formatter: '{b}: {c} aluno(s) ({d}%)' },
-                      legend: {
-                        orient: 'vertical',
-                        right: 0,
-                        top: 'center',
-                        data: learningStyleLabels
-                      },
-                      series: [{
-                        name: 'Alunos',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        avoidLabelOverlap: false,
-                        label: {
-                          show: true,
-                          position: 'outside',
-                          formatter: '{b}: {c}'
+                <div style={{ width: '100%', maxWidth: 900, margin: '0 0 24px 0' }}>
+                  <h2 style={{ color: '#222', textAlign: 'left', marginBottom: 16, marginTop: 0, paddingLeft: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    Distribuição dos alunos por estilo de aprendizagem predominante
+                    <span style={{ position: 'relative', display: 'inline-block' }}>
+                      <FaQuestionCircle style={{ color: '#2980b9', cursor: 'pointer' }} title="Este gráfico mostra a quantidade de alunos do professor agrupados pelo estilo de aprendizagem predominante, segundo o questionário de Honey-Alonso." />
+                    </span>
+                  </h2>
+                  <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                    <ReactECharts
+                      option={{
+                        tooltip: { trigger: 'item', formatter: '{b}: {c} aluno(s) ({d}%)' },
+                        legend: {
+                          orient: 'vertical',
+                          left: 0,
+                          top: 'center',
+                          data: learningStyleLabels
                         },
-                        emphasis: {
+                        series: [{
+                          name: 'Alunos',
+                          type: 'pie',
+                          radius: ['40%', '70%'],
+                          avoidLabelOverlap: false,
                           label: {
                             show: true,
-                            fontSize: 18,
-                            fontWeight: 'bold'
+                            position: 'outside',
+                            formatter: '{b}: {c}'
+                          },
+                          emphasis: {
+                            label: {
+                              show: true,
+                              fontSize: 18,
+                              fontWeight: 'bold'
+                            }
+                          },
+                          labelLine: { show: true },
+                          data: pizzaData,
+                          itemStyle: {
+                            color: function(params) {
+                              return ['#2980b9', '#16a085', '#e67e22', '#c0392b'][params.dataIndex];
+                            }
                           }
-                        },
-                        labelLine: { show: true },
-                        data: pizzaData
-                      }]
-                    }}
-                    style={{ height: 340, width: '100%' }}
-                    onEvents={{
-                      click: (params) => {
-                        if (params && typeof params.dataIndex === 'number') {
-                          const styleIdx = params.dataIndex;
-                          // Filtra alunos daquele estilo e ordena por predominância
-                          const alunos = alunosPorEstilo[styleIdx]
-                            .map(aluno => {
-                              // Descobre as turmas do aluno
-                              const turmas = classAverages.filter(cls => (cls.students||[]).includes(aluno.name)).map(cls => cls.className);
-                              return {
-                                name: aluno.name,
-                                turmas,
-                                valor: aluno.percentages[styleIdx] || 0
-                              };
-                            })
-                            .sort((a, b) => b.valor - a.valor);
-                          setPizzaModal({ open: true, styleIdx, alunos });
+                        }]
+                      }}
+                      style={{ height: 340, width: '100%' }}
+                      onEvents={{
+                        click: (params) => {
+                          if (params && typeof params.dataIndex === 'number') {
+                            const styleIdx = params.dataIndex;
+                            // Filtra alunos daquele estilo e ordena por predominância
+                            const alunos = alunosPorEstilo[styleIdx]
+                              .map(aluno => {
+                                // Descobre as turmas do aluno
+                                const turmas = classAverages.filter(cls => (cls.students||[]).includes(aluno.name)).map(cls => cls.className);
+                                return {
+                                  name: aluno.name,
+                                  turmas,
+                                  valor: aluno.percentages[styleIdx] || 0
+                                };
+                              })
+                              .sort((a, b) => b.valor - a.valor);
+                            setPizzaModal({ open: true, styleIdx, alunos });
+                          }
                         }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
                 </div>
                 <h2 style={{ color: '#2980b9', marginBottom: 12 }}>Sugestões de agrupamento por estilo de aprendizagem predominante</h2>
                 <ul style={{ paddingLeft: 20, margin: 0 }}>

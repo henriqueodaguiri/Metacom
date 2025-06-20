@@ -40,7 +40,7 @@ const baseChartOption = {
     name: 'Média',
     type: 'bar',
     data: Array(8).fill(0),
-    itemStyle: { color: '#8e44ad' },
+    itemStyle: { color: '#27ae60' }, // verde
     barCategoryGap: '30%'
   }],
   grid: { left: 130, right: 40, top: 40, bottom: 40 }
@@ -172,9 +172,9 @@ const LearningTeacherDashboard = () => {
         <button
           onClick={() => setInfoModal({ open: true, idx: -1 })}
           style={{
-            background: '#8e44ad', color: '#fff', border: 'none', borderRadius: 8,
+            background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
             padding: '10px 28px', fontWeight: 'bold', fontSize: 17, cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(142,68,173,0.08)', marginBottom: 8
+            boxShadow: '0 2px 8px rgba(39,174,96,0.08)', marginBottom: 8
           }}
         >
           O que são as Inteligências Múltiplas?
@@ -221,7 +221,7 @@ const LearningTeacherDashboard = () => {
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           Estatísticas das Inteligências Múltiplas por Turma
           <span style={{ position: 'relative', display: 'inline-block' }}>
-            <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Cada gráfico mostra a média das inteligências predominantes dos alunos de cada turma." />
+            <FaQuestionCircle style={{ color: '#27ae60', cursor: 'pointer' }} title="Cada gráfico mostra a média das inteligências predominantes dos alunos de cada turma." />
           </span>
         </h1>
         {loading ? (
@@ -240,13 +240,13 @@ const LearningTeacherDashboard = () => {
                   <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {cls.className}
                     <span style={{ position: 'relative', display: 'inline-block' }}>
-                      <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra a média das inteligências dos alunos desta turma." />
+                      <FaQuestionCircle style={{ color: '#27ae60', cursor: 'pointer' }} title="Este gráfico mostra a média das inteligências dos alunos desta turma." />
                     </span>
                   </h2>
                   <ReactECharts 
                     option={{
                       ...baseChartOption,
-                      series: [{ ...baseChartOption.series[0], data: cls.avg }]
+                      series: [{ ...baseChartOption.series[0], data: cls.avg, itemStyle: { color: '#27ae60' } }]
                     }} 
                     style={{ height: 320, width: '100%' }}
                     onEvents={{
@@ -324,7 +324,7 @@ const LearningTeacherDashboard = () => {
                 </tbody>
               </table>
               <div style={{ marginTop: 24, textAlign: 'right' }}>
-                <button onClick={() => setModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+                <button onClick={() => setModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
               </div>
             </Modal>
             {/* Gráfico de barras: quantidade de alunos por inteligência predominante */}
@@ -332,7 +332,7 @@ const LearningTeacherDashboard = () => {
               <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Quantidade de alunos por inteligência predominante
                 <span style={{ position: 'relative', display: 'inline-block' }}>
-                  <FaQuestionCircle style={{ color: '#8e44ad', cursor: 'pointer' }} title="Este gráfico mostra quantos alunos têm cada inteligência como predominante." />
+                  <FaQuestionCircle style={{ color: '#27ae60', cursor: 'pointer' }} title="Este gráfico mostra quantos alunos têm cada inteligência como predominante." />
                 </span>
               </h2>
               <ReactECharts
@@ -360,7 +360,7 @@ const LearningTeacherDashboard = () => {
                       });
                       return count;
                     }),
-                    itemStyle: { color: '#8e44ad' },
+                    itemStyle: { color: '#27ae60' }, // verde
                     barCategoryGap: '30%'
                   }],
                   grid: { left: 80, right: 40, top: 40, bottom: 40 }
@@ -447,7 +447,7 @@ const LearningTeacherDashboard = () => {
           </tbody>
         </table>
         <div style={{ marginTop: 24, textAlign: 'right' }}>
-          <button onClick={() => setGlobalModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+          <button onClick={() => setGlobalModalOpen(false)} style={{ padding: '8px 24px', borderRadius: 8, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
         </div>
       </Modal>
       {/* Modal de explicação da inteligência */}
@@ -473,7 +473,7 @@ const LearningTeacherDashboard = () => {
               Cada indivíduo possui um perfil único, podendo apresentar predominância em uma ou mais dessas inteligências. Reconhecer e valorizar essa diversidade é fundamental para promover uma educação mais inclusiva, personalizada e eficaz.
             </div>
             <div style={{ textAlign: 'right' }}>
-              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
             </div>
           </>
         ) : (
@@ -489,7 +489,7 @@ const LearningTeacherDashboard = () => {
               {intelligenceExplanations[infoModal.idx]}
             </div>
             <div style={{ textAlign: 'right' }}>
-              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#8e44ad', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
+              <button onClick={() => setInfoModal({ ...infoModal, open: false })} style={{ padding: '8px 24px', borderRadius: 8, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold' }}>Fechar</button>
             </div>
           </>
         )}
