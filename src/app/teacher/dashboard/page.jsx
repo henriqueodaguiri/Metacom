@@ -340,6 +340,19 @@ const TeacherDashboard = () => {
                     paddingBottom: turma.students.length > studentsPerPage ? 80 : 24
                   }}>
                     <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{turma.className}</h2>
+                    {/* Média da turma */}
+                    <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
+                      <span
+                        style={{ textDecoration: 'underline dotted', cursor: 'help' }}
+                        title="A média da turma é calculada somando as médias dos alunos e dividindo pelo número de alunos."
+                      >
+                        Média da turma:
+                      </span>
+                      {' '}
+                      {turma.students && turma.students.length > 0 && turma.students.filter(a => a.avg !== undefined && a.avg !== null).length > 0 ? (
+                        (turma.students.reduce((acc, a) => acc + (a.avg !== undefined && a.avg !== null ? Number(a.avg) : 0), 0) / turma.students.filter(a => a.avg !== undefined && a.avg !== null).length).toFixed(2)
+                      ) : '-'}
+                    </div>
                     {/* Botão exportar XLSX turma e select de ordenação na mesma linha */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <button onClick={() => exportTurmaToXLSX(turma)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
@@ -444,18 +457,22 @@ const TeacherDashboard = () => {
                     position: 'relative',
                     paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <h2 style={{ color: '#2980b9', marginBottom: 0 }}>{text.name}</h2>
-                      <button
-                        style={{
-                          background: '#27ae60', color: '#fff', border: 'none', borderRadius: 8,
-                          padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(39,174,96,0.08)', marginLeft: 16
-                        }}
-                        onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                      <h2 style={{ color: '#2980b9', margin: 0, marginRight: 8 }}>{text.name}</h2>
+                      <button onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))} style={{ marginLeft: 'auto', background: '#fff', color: '#2980b9', border: '1px solid #2980b9', borderRadius: 8, padding: '4px 12px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer' }}>Ver perguntas</button>
+                    </div>
+                    {/* Média da leitura */}
+                    <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
+                      <span
+                        style={{ textDecoration: 'underline dotted', cursor: 'help' }}
+                        title="A média das notas é calculada somando todas as notas dos alunos que responderam à leitura e dividindo pelo número de alunos com nota."
                       >
-                        {showQuestions[text.id || idx] ? 'Ver alunos' : 'Ver perguntas'}
-                      </button>
+                        Média das notas:
+                      </span>
+                      {' '}
+                      {text.students && text.students.length > 0 ? (
+                        (text.students.reduce((acc, a) => acc + (a.grade !== undefined && a.grade !== null ? Number(a.grade) : 0), 0) / text.students.filter(a => a.grade !== undefined && a.grade !== null).length).toFixed(2)
+                      ) : '-'}
                     </div>
                     {/* Botão exportar XLSX leitura e select de ordenação na mesma linha */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -464,12 +481,12 @@ const TeacherDashboard = () => {
                         value={text.sortOrder || 'az'}
                         onChange={e => {
                           const order = e.target.value;
-                          setTexts(prev => prev.map((t, i) => {
+                          setTeacherTexts(prev => prev.map((t, i) => {
                             if ((t.id || i) !== (text.id || idx)) return t;
                             const sorted = [...t.students].sort((a, b) => {
                               if (order === 'az') return a.name.localeCompare(b.name);
                               if (order === 'za') return b.name.localeCompare(a.name);
-                              if (order === 'maior') return (b.grade ?? 0) - (a.grade ?? 0);
+                              if (order === 'media') return (b.grade ?? 0) - (a.grade ?? 0);
                               if (order === 'menor') return (a.grade ?? 0) - (b.grade ?? 0);
                               return 0;
                             });
@@ -480,11 +497,11 @@ const TeacherDashboard = () => {
                       >
                         <option value="az">A-Z</option>
                         <option value="za">Z-A</option>
-                        <option value="maior">Maior nota</option>
+                        <option value="media">Maior nota</option>
                         <option value="menor">Menor nota</option>
                       </select>
                     </div>
-                    {/* Lista de alunos ou perguntas */}
+                    {/* Lista de alunos da leitura */}
                     {showQuestions[text.id || idx] ? (
                       (!text.questions || text.questions.length === 0) ? (
                         <p style={{ color: '#888' }}>Nenhuma pergunta cadastrada para esta leitura.</p>
