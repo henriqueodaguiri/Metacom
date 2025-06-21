@@ -112,6 +112,7 @@ const ClassDashboard = () => {
       });
       if (exists) {
         setGroupCreateMsg({ success: false, text: 'Já existe uma turma com esses alunos.' });
+        setRecommendations(prev => prev.filter((_, i) => i !== idx)); // Remove recomendação
         setCreatingGroupIdx(null);
         return;
       }
@@ -122,6 +123,7 @@ const ClassDashboard = () => {
       });
       setGroupCreateMsg({ success: true, text: 'Turma criada com sucesso!' });
       setClasses(prev => [...prev, res.data.classroom]);
+      setRecommendations(prev => prev.filter((_, i) => i !== idx)); // Remove recomendação
     } catch (e) {
       setGroupCreateMsg({ success: false, text: 'Erro ao criar turma.' });
     }
