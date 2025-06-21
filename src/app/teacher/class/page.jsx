@@ -43,6 +43,8 @@ const ClassDashboard = () => {
       const intIdx = getPredominantIdx(aluno.intelligencePercentages);
       const styleIdx = getPredominantIdx(aluno.stylePercentages);
       if (intIdx === -1 || styleIdx === -1) return;
+      // Remover agrupamentos cujo estilo é undefined
+      if (typeof learningStyleLabels[styleIdx] === 'undefined') return;
       const key = `${intIdx}-${styleIdx}`;
       if (!map[key]) map[key] = [];
       map[key].push(aluno);
