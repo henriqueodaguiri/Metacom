@@ -62,8 +62,21 @@ const getByName = async (name = "", userId, role) => {
     };
   }
 
-  const classes = await prisma.class.findMany(baseQuery);
-  return classes;
+  const classes = await prisma.class.findMany({
+    ...baseQuery,
+    include: {
+      classUser: {
+        include: {
+          student: true
+        }
+      }
+    }
+  });
+  // Adapta para retornar students direto no array, igual front espera
+  return classes.map(cls => ({
+    ...cls,
+    students: cls.classUser.map(cu => cu.student)
+  }));
 };
 
 const deleteById = async (id, userId) => {

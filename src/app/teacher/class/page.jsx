@@ -37,7 +37,7 @@ const ClassDashboard = () => {
   }
 
   // Função para sugerir agrupamentos por inteligência E estilo
-  function suggestGroups(students) {
+  function suggestGroups(students, classes) {
     const map = {};
     students.forEach(aluno => {
       const intIdx = getPredominantIdx(aluno.intelligencePercentages);
@@ -50,7 +50,7 @@ const ClassDashboard = () => {
       map[key].push(aluno);
     });
     // Só recomenda grupos com mais de 1 aluno
-    return Object.entries(map)
+    let groups = Object.entries(map)
       .filter(([, alunos]) => alunos.length > 1)
       .map(([key, alunos]) => {
         const [intIdx, styleIdx] = key.split('-').map(Number);
@@ -61,6 +61,17 @@ const ClassDashboard = () => {
           label: `Inteligência: ${intelligenceLabels[intIdx]} + Estilo: ${learningStyleLabels[styleIdx]}`
         };
       });
+    // Filtra grupos que já existem como turma
+    groups = groups.filter(group => {
+      const studentIds = group.alunos.map(a => String(a.id)).sort().join(',');
+      return !classes.some(cls => {
+        const clsStudents = Array.isArray(cls.students) ? cls.students : [];
+        if (clsStudents.length !== group.alunos.length) return false;
+        const clsIds = clsStudents.map(s => String(s.id)).sort().join(',');
+        return clsIds === studentIds;
+      });
+    });
+    return groups;
   }
 
   // Busca alunos e turmas do professor
@@ -87,7 +98,7 @@ const ClassDashboard = () => {
         setAllStudents(all);
         setClasses(resClasses?.data?.classroom || []);
         // Recomendações
-        setRecommendations(suggestGroups(all));
+        setRecommendations(suggestGroups(all, resClasses?.data?.classroom || []));
       } catch (e) {
         setAllStudents([]);
         setRecommendations([]);
@@ -177,7 +188,7 @@ const ClassDashboard = () => {
         }
       </ContentContainer>
       {/* Recomendações de agrupamento */}
-      <div style={{ margin: '32px 0', background: '#f6f8fa', borderRadius: 16, boxShadow: '0 2px 8px rgba(41,128,185,0.08)', padding: 24 }}>
+      <div style={{ margin: '32px 24px', background: '#f6f8fa', borderRadius: 16, boxShadow: '0 2px 8px rgba(41,128,185,0.08)', padding: 24 }}>
         <h2 style={{ color: '#222', marginBottom: 16 }}>Sugestões de turmas por inteligência e estilo predominante</h2>
         {loading ? <p>Carregando recomendações...</p> : (
           recommendations.length === 0 ? <p>Nenhum agrupamento significativo encontrado.</p> : (
