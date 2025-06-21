@@ -36,6 +36,14 @@ const ClassDashboard = () => {
     return arr.findIndex(v => v === max);
   }
 
+  // Função utilitária para comparar arrays de IDs de alunos
+  function isSameGroup(idsA, idsB) {
+    if (idsA.length !== idsB.length) return false;
+    const a = [...idsA].map(String).sort().join(',');
+    const b = [...idsB].map(String).sort().join(',');
+    return a === b;
+  }
+
   // Função para sugerir agrupamentos por inteligência E estilo
   function suggestGroups(students, classes) {
     const map = {};
@@ -63,16 +71,16 @@ const ClassDashboard = () => {
       });
     // Filtra grupos que já existem como turma
     groups = groups.filter(group => {
-      const studentIds = group.alunos.map(a => String(a.id)).sort().join(',');
-      return !classes.some(cls => {
-        const clsStudents = Array.isArray(cls.students) ? cls.students : [];
-        if (clsStudents.length !== group.alunos.length) return false;
-        const clsIds = clsStudents.map(s => String(s.id)).sort().join(',');
-        return clsIds === studentIds;
-      });
+      const studentIds = group.alunos.map(a => a.id);
+      return !classes.some(cls => isSameGroup(studentIds, (cls.students || []).map(s => s.id)));
     });
     return groups;
   }
+
+  // Atualiza recomendações sempre que classes mudarem
+  useEffect(() => {
+    setRecommendations(suggestGroups(allStudents, classes));
+  }, [allStudents, classes]);
 
   // Busca alunos e turmas do professor
   useEffect(() => {
@@ -97,15 +105,31 @@ const ClassDashboard = () => {
         const all = Object.values(studentsMap).filter(s => s.intelligencePercentages && s.stylePercentages);
         setAllStudents(all);
         setClasses(resClasses?.data?.classroom || []);
-        // Recomendações
-        setRecommendations(suggestGroups(all, resClasses?.data?.classroom || []));
       } catch (e) {
         setAllStudents([]);
-        setRecommendations([]);
+        setClasses([]);
       }
       setLoading(false);
     }
     fetchData();
+  }, []);
+
+  // Atualiza classes ao pesquisar
+  useEffect(() => {
+    async function fetchClasses() {
+      const response = await api.get(`/classes?name=${search}`);
+      const classes = response?.data?.classroom;
+      setClasses(classes || []);
+    }
+    fetchClasses();
+  }, [search]);
+
+  useEffect(() => {
+    const message = sessionStorage.getItem("messageStorage");
+    if (message) {
+      toast.success(message);
+      sessionStorage.removeItem("messageStorage"); 
+    }
   }, []);
 
   // Handler para criar turma
@@ -115,12 +139,7 @@ const ClassDashboard = () => {
     try {
       const studentIds = group.alunos.map(a => a.id);
       // Verifica se já existe turma com exatamente esses alunos
-      const exists = classes.some(cls => {
-        if (!cls.students || cls.students.length !== studentIds.length) return false;
-        const clsIds = (cls.students || []).map(s => s.id).sort().join(',');
-        const groupIds = [...studentIds].sort().join(',');
-        return clsIds === groupIds;
-      });
+      const exists = classes.some(cls => isSameGroup(studentIds, (cls.students || []).map(s => s.id)));
       if (exists) {
         setGroupCreateMsg({ success: false, text: 'Já existe uma turma com esses alunos.' });
         setRecommendations(prev => prev.filter((_, i) => i !== idx)); // Remove recomendação
@@ -133,31 +152,16 @@ const ClassDashboard = () => {
         studentIds
       });
       setGroupCreateMsg({ success: true, text: 'Turma criada com sucesso!' });
-      setClasses(prev => [...prev, res.data.classroom]);
+      // Busca turmas atualizadas do backend para garantir que a recomendação suma
+      const resClasses = await api.get(`/classes?name=${search}`);
+      setClasses(resClasses?.data?.classroom || []);
+      // Remove a recomendação do grupo criado
       setRecommendations(prev => prev.filter((_, i) => i !== idx)); // Remove recomendação
     } catch (e) {
       setGroupCreateMsg({ success: false, text: 'Erro ao criar turma.' });
     }
     setCreatingGroupIdx(null);
   }
-
-  useEffect(() => {
-    async function fetchClasses() {
-      const response = await api.get(`/classes?name=${search}`);
-      const classes = response?.data?.classroom;
-      setClasses(classes);
-    }
-
-    fetchClasses();
-  }, [search]);
-
-  useEffect(() => {
-    const message = sessionStorage.getItem("messageStorage");
-    if (message) {
-      toast.success(message);
-      sessionStorage.removeItem("messageStorage"); 
-    }
-  }, []);
 
   return (
     <Container>
