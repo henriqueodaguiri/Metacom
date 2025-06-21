@@ -97,12 +97,12 @@ export function Header() {
             />
           )
         }
-                {
-          (role === roles.STUDENT || role === roles.TEACHER) && (
+        {
+          role === roles.TEACHER && (
             <Button
               bgColor={"transparent"}
               onClick={redirectDashboard}
-              title={role === roles.TEACHER ? "Dashboard" : "Meu desempenho"}
+              title={"Dashboard"}
             />
           )
         }
