@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { api } from "@/lib/api";
 import Link from "next/link";
+import QuestionnaireModals from "./QuestionnaireModals";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -17,6 +18,8 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("student");
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
   const router = useRouter();
 
   function validateInput() {
@@ -42,7 +45,11 @@ const SignUp = () => {
     if(!validateInput()) {
       return;
     }
-
+    if(role === "student") {
+      setPendingData({ name, email, password, role });
+      setShowQuestionnaire(true);
+      return;
+    }
     try {
       await api.post("/users", {name, email, password, role});
       toast.success("Cadastrado com sucesso!", {
@@ -52,6 +59,35 @@ const SignUp = () => {
         autoClose: 1500, 
       });
     } catch (error) {
+      const errorMessage = error.response?.data?.message;
+      if(errorMessage) {
+        toast.error(errorMessage);
+      } else {
+        console.log(error);
+        toast.error("Não foi possível cadastrar.");
+      }
+    }
+  }
+
+  async function handleQuestionnaireFinish({ intelligencePercentages, stylePercentages }) {
+    if (!pendingData) return;
+    try {
+      await api.post("/users", {
+        ...pendingData,
+        intelligencePercentages,
+        stylePercentages
+      });
+      setShowQuestionnaire(false);
+      setPendingData(null);
+      toast.success("Cadastrado com sucesso!", {
+        onClose: () => {
+          router.push("/signin");
+        },
+        autoClose: 1500, 
+      });
+    } catch (error) {
+      setShowQuestionnaire(false);
+      setPendingData(null);
       const errorMessage = error.response?.data?.message;
       if(errorMessage) {
         toast.error(errorMessage);
@@ -115,6 +151,11 @@ const SignUp = () => {
           title={"Cadastrar"}
           onClick={handleSignUp}
           width={"100%"}
+        />
+        <QuestionnaireModals
+          open={showQuestionnaire}
+          onClose={() => { setShowQuestionnaire(false); setPendingData(null); }}
+          onFinish={handleQuestionnaireFinish}
         />
         <Link href="/signin">
           Já tenho cadastro
