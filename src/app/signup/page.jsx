@@ -72,7 +72,7 @@ const SignUp = () => {
   async function handleQuestionnaireFinish({ intelligencePercentages, stylePercentages }) {
     if (!pendingData) return;
     try {
-      // Salva apenas no localStorage (rotas protegidas não podem ser usadas sem login)
+      // Salva no localStorage para garantir experiência offline/primeiro acesso
       localStorage.setItem("learningResult", JSON.stringify({ percentages: intelligencePercentages }));
       localStorage.setItem("learningPreferencesResult", JSON.stringify({ percentages: stylePercentages }));
       // Cria usuário
@@ -81,6 +81,14 @@ const SignUp = () => {
         intelligencePercentages,
         stylePercentages
       });
+      // Login automático
+      await api.post("/session", {
+        email: pendingData.email,
+        password: pendingData.password
+      });
+      // Agora pode salvar os resultados nas rotas protegidas
+      await api.post("/learning", { percentages: intelligencePercentages });
+      await api.post("/learning_preferences", { percentages: stylePercentages });
       setShowQuestionnaire(false);
       setPendingData(null);
       toast.success("Cadastrado com sucesso!", {
