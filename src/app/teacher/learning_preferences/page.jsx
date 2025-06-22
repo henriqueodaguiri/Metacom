@@ -262,14 +262,10 @@ const LearningPreferencesDashboard = () => {
         </Modal>
         {loading ? (
           <p>Carregando...</p>
+        ) : classAverages.length === 0 ? (
+          <p>Nenhuma turma encontrada.</p>
         ) : (
           <>
-            {classAverages.length === 0 && (
-              <>
-                <p>Nenhuma turma encontrada.</p>
-                <pre style={{ background: '#eee', padding: 8 }}>{JSON.stringify({ studentsAvg, classAverages }, null, 2)}</pre>
-              </>
-            )}
             {/* Gráficos das turmas */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'stretch', justifyContent: 'flex-start' }}>
               {classAverages.map((cls, idx) => (
@@ -332,8 +328,8 @@ const LearningPreferencesDashboard = () => {
                 </div>
               ))}
             </div>
-            {/* Card de sugestões de agrupamento por estilo predominante */}
-            {agrupamentosPorEstilo.length > 0 && (
+            {/* Card de sugestões de agrupamento por estilo predominante e gráfico de pizza */}
+            {allStudents.length > 0 && agrupamentosPorEstilo.length > 0 && (
               <div style={{
                 margin: '32px 0',
                 background: '#f6f8fa',

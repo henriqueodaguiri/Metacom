@@ -226,14 +226,10 @@ const LearningTeacherDashboard = () => {
         </h1>
         {loading ? (
           <p>Carregando...</p>
+        ) : classAverages.length === 0 ? (
+          <p>Nenhuma turma encontrada.</p>
         ) : (
           <>
-            {classAverages.length === 0 && (
-              <>
-                <p>Nenhuma turma encontrada.</p>
-                <pre style={{background:'#eee',padding:8}}>{JSON.stringify({studentsAvg, classAverages}, null, 2)}</pre>
-              </>
-            )}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'stretch', justifyContent: 'flex-start' }}>
               {classAverages.map((cls, idx) => (
                 <div key={idx} style={{ flex: '1 1 48%', maxWidth: '48%', minWidth: 320, background: 'white', borderRadius: 16, padding: 24, marginBottom: 32, display: 'flex', flexDirection: 'column' }}>
@@ -328,84 +324,86 @@ const LearningTeacherDashboard = () => {
               </div>
             </Modal>
             {/* Gráfico de barras: quantidade de alunos por inteligência predominante */}
-            <div style={{ margin: '48px 0 0 0', background: '#fff', borderRadius: 16, padding: 24 }}>
-              <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                Quantidade de alunos por inteligência predominante
-                <span style={{ position: 'relative', display: 'inline-block' }}>
-                  <FaQuestionCircle style={{ color: '#27ae60', cursor: 'pointer' }} title="Este gráfico mostra quantos alunos têm cada inteligência como predominante." />
-                </span>
-              </h2>
-              <ReactECharts
-                option={{
-                  tooltip: { trigger: 'axis' },
-                  xAxis: {
-                    type: 'category',
-                    data: intelligenceLabels,
-                    axisLabel: {
-                      width: 120,
-                      formatter: value => value.length > 12 ? value.match(/.{1,12}/g).join('\n') : value
-                    }
-                  },
-                  yAxis: { type: 'value', minInterval: 1 },
-                  series: [{
-                    name: 'Alunos',
-                    type: 'bar',
-                    data: intelligenceLabels.map((_, idx) => {
-                      let count = 0;
-                      allStudents.forEach(aluno => {
-                        if (!aluno.percentages) return;
-                        const max = Math.max(...aluno.percentages);
-                        const indices = aluno.percentages.map((v, i) => v === max ? i : -1).filter(i => i !== -1);
-                        if (indices.length === 1 && indices[0] === idx) count++;
+            {allStudents.length > 0 && (
+              <div style={{ margin: '48px 0 0 0', background: '#fff', borderRadius: 16, padding: 24 }}>
+                <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Quantidade de alunos por inteligência predominante
+                  <span style={{ position: 'relative', display: 'inline-block' }}>
+                    <FaQuestionCircle style={{ color: '#27ae60', cursor: 'pointer' }} title="Este gráfico mostra quantos alunos têm cada inteligência como predominante." />
+                  </span>
+                </h2>
+                <ReactECharts
+                  option={{
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                      type: 'category',
+                      data: intelligenceLabels,
+                      axisLabel: {
+                        width: 120,
+                        formatter: value => value.length > 12 ? value.match(/.{1,12}/g).join('\n') : value
+                      }
+                    },
+                    yAxis: { type: 'value', minInterval: 1 },
+                    series: [{
+                      name: 'Alunos',
+                      type: 'bar',
+                      data: intelligenceLabels.map((_, idx) => {
+                        let count = 0;
+                        allStudents.forEach(aluno => {
+                          if (!aluno.percentages) return;
+                          const max = Math.max(...aluno.percentages);
+                          const indices = aluno.percentages.map((v, i) => v === max ? i : -1).filter(i => i !== -1);
+                          if (indices.length === 1 && indices[0] === idx) count++;
+                        });
+                        return count;
+                      }),
+                      itemStyle: { color: '#27ae60' }, // verde
+                      barCategoryGap: '30%'
+                    }],
+                    grid: { left: 80, right: 40, top: 40, bottom: 40 }
+                  }}
+                  style={{ height: 420, width: '100%' }}
+                  onEvents={{ click: handleGlobalBarClick }}
+                />
+                {/* Sugestões de agrupamento global */}
+                <div style={{ marginTop: 32 }}>
+                  <h3>Sugestões de agrupamento global</h3>
+                  {(() => {
+                    const groups = getGroupingSuggestions(allStudents);
+                    const filteredGroups = groups.filter(g => {
+                      if (!g.students.length) return true;
+                      const groupStudentNames = g.students.map(s => s.replace(/ \(.*\)$/, '')).sort();
+                      return !classAverages.some(cls => {
+                        if (!cls.students || cls.students.length !== groupStudentNames.length) return false;
+                        const classStudentNames = cls.students.slice().sort();
+                        return JSON.stringify(classStudentNames) === JSON.stringify(groupStudentNames);
                       });
-                      return count;
-                    }),
-                    itemStyle: { color: '#27ae60' }, // verde
-                    barCategoryGap: '30%'
-                  }],
-                  grid: { left: 80, right: 40, top: 40, bottom: 40 }
-                }}
-                style={{ height: 420, width: '100%' }}
-                onEvents={{ click: handleGlobalBarClick }}
-              />
-              {/* Sugestões de agrupamento global */}
-              <div style={{ marginTop: 32 }}>
-                <h3>Sugestões de agrupamento global</h3>
-                {(() => {
-                  const groups = getGroupingSuggestions(allStudents);
-                  const filteredGroups = groups.filter(g => {
-                    if (!g.students.length) return true;
-                    const groupStudentNames = g.students.map(s => s.replace(/ \(.*\)$/, '')).sort();
-                    return !classAverages.some(cls => {
-                      if (!cls.students || cls.students.length !== groupStudentNames.length) return false;
-                      const classStudentNames = cls.students.slice().sort();
-                      return JSON.stringify(classStudentNames) === JSON.stringify(groupStudentNames);
                     });
-                  });
-                  return (
-                    <ul style={{ margin: '12px 0 0 0', paddingLeft: 20 }}>
-                      {filteredGroups.map((g, i) => (
-                        <li key={i} style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <span><b>{g.label}:</b> {g.students.length > 0 ? g.students.join(', ') : 'Nenhum grupo significativo.'}</span>
-                          {g.students.length > 0 && (
-                            <button
-                              onClick={() => handleCreateGroupClass(g, i)}
-                              style={{ padding: '4px 14px', borderRadius: 6, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 14, cursor: 'pointer' }}
-                              disabled={creatingGroupIdx === i}
-                            >
-                              {creatingGroupIdx === i ? 'Criando...' : 'Criar turma'}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  );
-                })()}
-                {groupCreateMsg && (
-                  <div style={{ marginTop: 16, color: groupCreateMsg.success ? '#27ae60' : '#c0392b', fontWeight: 'bold' }}>{groupCreateMsg.text}</div>
-                )}
+                    return (
+                      <ul style={{ margin: '12px 0 0 0', paddingLeft: 20 }}>
+                        {filteredGroups.map((g, i) => (
+                          <li key={i} style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <span><b>{g.label}:</b> {g.students.length > 0 ? g.students.join(', ') : 'Nenhum grupo significativo.'}</span>
+                            {g.students.length > 0 && (
+                              <button
+                                onClick={() => handleCreateGroupClass(g, i)}
+                                style={{ padding: '4px 14px', borderRadius: 6, background: '#27ae60', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 14, cursor: 'pointer' }}
+                                disabled={creatingGroupIdx === i}
+                              >
+                                {creatingGroupIdx === i ? 'Criando...' : 'Criar turma'}
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
+                  {groupCreateMsg && (
+                    <div style={{ marginTop: 16, color: groupCreateMsg.success ? '#27ae60' : '#c0392b', fontWeight: 'bold' }}>{groupCreateMsg.text}</div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
