@@ -52,9 +52,11 @@ const SignUp = () => {
     }
     try {
       await api.post("/users", {name, email, password, role});
+      // Login automático para professor
+      await api.post("/session", { email, password });
       toast.success("Cadastrado com sucesso!", {
         onClose: () => {
-          router.push("/signin");
+          router.push("/teacher"); // Redireciona para dashboard do professor
         },
         autoClose: 1500, 
       });
