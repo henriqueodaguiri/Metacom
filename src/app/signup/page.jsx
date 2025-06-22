@@ -72,6 +72,10 @@ const SignUp = () => {
   async function handleQuestionnaireFinish({ intelligencePercentages, stylePercentages }) {
     if (!pendingData) return;
     try {
+      // Salva apenas no localStorage (rotas protegidas não podem ser usadas sem login)
+      localStorage.setItem("learningResult", JSON.stringify({ percentages: intelligencePercentages }));
+      localStorage.setItem("learningPreferencesResult", JSON.stringify({ percentages: stylePercentages }));
+      // Cria usuário
       await api.post("/users", {
         ...pendingData,
         intelligencePercentages,
