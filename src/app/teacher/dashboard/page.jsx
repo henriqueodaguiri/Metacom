@@ -493,7 +493,7 @@ const TeacherDashboard = () => {
                       value={text.sortOrder || 'az'}
                       onChange={e => {
                         const order = e.target.value;
-                        setTeacherTexts(prev => prev.map((t, i) => {
+                        setTexts(prev => prev.map((t, i) => {
                           if ((t.id || i) !== (text.id || idx)) return t;
                           const sorted = [...t.students].sort((a, b) => {
                             if (order === 'az') return a.name.localeCompare(b.name);
