@@ -3,7 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
 
-// Cria usuários iniciais: 1 professor e 20 alunos
+// Cria usuários iniciais: 1 professor e 120 alunos
 async function createUsers() {
   const saltRounds = 10;
   const password = "123";
@@ -21,8 +21,8 @@ async function createUsers() {
     },
   });
 
-  // Cria ou atualiza 20 alunos
-  for (let i = 1; i <= 20; i++) {
+  // Cria ou atualiza 120 alunos
+  for (let i = 1; i <= 120; i++) {
     await prisma.user.upsert({
       where: { email: `student${i}@example.com` },
       update: {},
@@ -35,18 +35,18 @@ async function createUsers() {
   }
 }
 
-// Cria duas turmas e associa alunos a elas
+// Cria 8 turmas e associa 15 alunos a cada uma
 async function createClasses() {
   // Busca o professor
   const teacher = await prisma.user.findFirst({
     where: { email: "teacher@example.com" },
   });
 
-  // Cria ou atualiza duas turmas
-  for (let i = 1; i <= 2; i++) {
-    const accessKey = i === 1 ? "juQA6st0" : "1RctlB69";
+  // Cria ou atualiza 8 turmas
+  for (let i = 1; i <= 8; i++) {
+    const accessKey = Math.random().toString(36).slice(2, 10);
     await prisma.class.upsert({
-      where: { name: `Class ${i}` },
+      where: { name_active: { name: `Class ${i}`, active: true } },
       update: {},
       create: {
         name: `Class ${i}`,
@@ -56,14 +56,21 @@ async function createClasses() {
     });
   }
 
-  // Associa 10 alunos a cada turma
+  // Associa 15 alunos a cada turma (alunos não se repetem entre turmas)
   const createdClasses = await prisma.class.findMany();
+  let studentCounter = 1;
   for (let i = 0; i < createdClasses.length; i++) {
-    for (let j = 1; j <= 10; j++) {
-      const studentEmail = `student${i * 10 + j}@example.com`;
+    for (let j = 1; j <= 15; j++) {
+      if (studentCounter > 120) break;
+      const studentEmail = `student${studentCounter}@example.com`;
       const student = await prisma.user.findFirst({
         where: { email: studentEmail },
       });
+
+      if (!student) {
+        console.warn(`Aluno não encontrado: ${studentEmail}`);
+        continue;
+      }
 
       await prisma.classUser.upsert({
         where: {
@@ -78,168 +85,195 @@ async function createClasses() {
           studentId: student.id,
         },
       });
+
+      studentCounter++;
     }
   }
 }
 
-// Cria um texto de exemplo, questões e alternativas, e associa às turmas
+// Cria 5 textos de exemplo, cada um com 5 questões e 5 alternativas, e associa todos os textos a todas as turmas
 async function createTextAndQuestions() {
-  // Verifica se já existe o texto
-  let newText = await prisma.text.findFirst({
-    where: { name: "Sample Text" },
-  });
-
-  // Cria texto, questões e alternativas se não existir
-  if (!newText) {
-    newText = await prisma.text.create({
-      data: {
-        name: "Sample Text",
-        content: "This is a sample text content.",
-        difficulty: "REGULAR",
-      },
+  let texts = [];
+  for (let t = 1; t <= 5; t++) {
+    let newText = await prisma.text.findFirst({
+      where: { name: `Sample Text ${t}` },
     });
 
-    // Cria 5 questões para o texto
-    for (let i = 1; i <= 5; i++) {
-      const question = await prisma.question.create({
+    if (!newText) {
+      newText = await prisma.text.create({
         data: {
-          textId: newText.id,
-          statement: `Sample question ${i} about the text.`,
+          name: `Sample Text ${t}`,
+          content: `This is a sample text content for text ${t}.`,
+          difficulty: "REGULAR",
         },
       });
 
-      // Cria 5 alternativas para cada questão (a primeira é correta)
-      for (let j = 1; j <= 5; j++) {
-        await prisma.choice.create({
+      // Cria 5 questões para o texto
+      for (let i = 1; i <= 5; i++) {
+        const question = await prisma.question.create({
           data: {
-            questionId: question.id,
-            isCorrect: j === 1,
-            content: `Choice ${j} content.`,
+            textId: newText.id,
+            statement: `Sample question ${i} about text ${t}.`,
           },
         });
+
+        // Cria 5 alternativas para cada questão (a primeira é correta)
+        for (let j = 1; j <= 5; j++) {
+          await prisma.choice.create({
+            data: {
+              questionId: question.id,
+              isCorrect: j === 1,
+              content: `Choice ${j} content for question ${i} of text ${t}.`,
+            },
+          });
+        }
       }
     }
+    texts.push(newText);
   }
 
-  // Associa o texto criado a todas as turmas
+  // Associa todos os textos a todas as turmas
   const classes = await prisma.class.findMany();
   for (const cls of classes) {
-    await prisma.classText.upsert({
-      where: {
-        classId_textId: {
-          classId: cls.id,
-          textId: newText.id,
+    for (const text of texts) {
+      await prisma.classText.upsert({
+        where: {
+          classId_textId: {
+            classId: cls.id,
+            textId: text.id,
+          },
         },
-      },
-      update: {},
-      create: {
-        classId: cls.id,
-        textId: newText.id,
-      },
-    });
+        update: {},
+        create: {
+          classId: cls.id,
+          textId: text.id,
+        },
+      });
+    }
   }
 }
 
-// Cria respostas dos alunos e calcula desempenho
+// Cria respostas dos alunos (corretas e incorretas aleatórias) e calcula desempenho
 async function createAnswersAndPerformance() {
-  // Busca a turma 1
-  const class1 = await prisma.class.findFirst({
-    where: { name: "Class 1" },
-  });
+  const classes = await prisma.class.findMany();
 
-  // Busca os 10 alunos da turma 1
-  const studentsClass1 = await prisma.user.findMany({
-    where: {
-      email: {
-        in: Array.from({ length: 10 }, (_, i) => `student${i + 1}@example.com`),
-      },
-    },
-  });
+  for (const cls of classes) {
+    // Busca os 15 alunos da turma
+    const classUsers = await prisma.classUser.findMany({
+      where: { classId: cls.id },
+      include: { student: true },
+    });
+    const students = classUsers.map(cu => cu.student);
 
-  // Busca todas as questões
-  const questions = await prisma.question.findMany();
+    // Busca todos os textos associados à turma
+    const classTexts = await prisma.classText.findMany({
+      where: { classId: cls.id },
+    });
 
-  // Para cada aluno, cria respostas corretas e soma a nota
-  for (const student of studentsClass1) {
-    let totalGrade = 0;
-
-    for (const question of questions) {
-      const choices = await prisma.choice.findMany({
-        where: { questionId: question.id },
+    let allQuestions = [];
+    for (const ct of classTexts) {
+      const questions = await prisma.question.findMany({
+        where: { textId: ct.textId },
       });
+      allQuestions.push(...questions);
+    }
 
-      const selectedChoice = choices.find((choice) => choice.isCorrect);
+    // Para cada aluno, cria respostas aleatórias e soma a nota
+    for (const student of students) {
+      let totalGrade = 0;
 
-      // Evita duplicatas de respostas
-      const existingAnswer = await prisma.answer.findFirst({
-        where: {
-          questionId: question.id,
-          studentId: student.id,
-        },
-      });
+      for (const question of allQuestions) {
+        const choices = await prisma.choice.findMany({
+          where: { questionId: question.id },
+        });
 
-      if (!existingAnswer && selectedChoice) {
-        totalGrade += 2;
-        await prisma.answer.create({
-          data: {
+        // Escolhe uma alternativa aleatória (pode ser correta ou não)
+        const selectedChoice = choices[Math.floor(Math.random() * choices.length)];
+
+        // Evita duplicatas de respostas
+        const existingAnswer = await prisma.answer.findFirst({
+          where: {
             questionId: question.id,
-            choiceId: selectedChoice.id,
             studentId: student.id,
           },
         });
-      } else if (selectedChoice) {
-        totalGrade += 2;
+
+        if (!existingAnswer && selectedChoice) {
+          if (selectedChoice.isCorrect) totalGrade += 2;
+          await prisma.answer.create({
+            data: {
+              questionId: question.id,
+              choiceId: selectedChoice.id,
+              studentId: student.id,
+            },
+          });
+        } else if (selectedChoice && existingAnswer && selectedChoice.isCorrect) {
+          totalGrade += 2;
+        }
+      }
+
+      // Evita duplicatas de performance para cada texto
+      for (const ct of classTexts) {
+        const questions = await prisma.question.findMany({
+          where: { textId: ct.textId },
+        });
+        let grade = 0;
+        for (const question of questions) {
+          const answer = await prisma.answer.findFirst({
+            where: {
+              questionId: question.id,
+              studentId: student.id,
+            },
+            include: { choice: true },
+          });
+          if (answer && answer.choice.isCorrect) grade += 2;
+        }
+
+        const existingPerformance = await prisma.performance.findFirst({
+          where: {
+            studentId: student.id,
+            classId: cls.id,
+            textId: ct.textId,
+          },
+        });
+
+        if (!existingPerformance) {
+          await prisma.performance.create({
+            data: {
+              studentId: student.id,
+              classId: cls.id,
+              textId: ct.textId,
+              grade: grade,
+            },
+          });
+        }
       }
     }
 
-    // Evita duplicatas de performance
-    const existingPerformance = await prisma.performance.findFirst({
-      where: {
-        studentId: student.id,
-        classId: class1.id,
-        textId: questions[0].textId,
-      },
-    });
-
-    if (!existingPerformance) {
-      await prisma.performance.create({
-        data: {
+    // Calcula média de desempenho dos alunos na turma
+    for (const student of students) {
+      const performances = await prisma.performance.findMany({
+        where: {
           studentId: student.id,
-          classId: class1.id,
-          textId: questions[0].textId,
-          grade: totalGrade,
+          classId: cls.id,
+          textId: { in: classTexts.map((ct) => ct.textId) },
         },
       });
-    }
-  }
 
-  // Calcula média de desempenho dos alunos na turma
-  const classTexts = await prisma.classText.findMany({
-    where: { classId: class1.id },
-  });
+      const averageGrade =
+        performances.reduce((sum, perf) => sum + perf.grade, 0) /
+        (performances.length || 1);
 
-  for (const student of studentsClass1) {
-    const performances = await prisma.performance.findMany({
-      where: {
-        studentId: student.id,
-        classId: class1.id,
-        textId: { in: classTexts.map((ct) => ct.textId) },
-      },
-    });
-
-    const averageGrade =
-      performances.reduce((sum, perf) => sum + perf.grade, 0) /
-      (performances.length || 1);
-
-    await prisma.classUser.update({
-      where: {
-        classId_studentId: {
-          classId: class1.id,
-          studentId: student.id,
+      await prisma.classUser.update({
+        where: {
+          classId_studentId: {
+            classId: cls.id,
+            studentId: student.id,
+          },
         },
-      },
-      data: { grade: averageGrade },
-    });
+        data: { grade: averageGrade },
+      });
+    }
   }
 }
 
@@ -258,25 +292,25 @@ async function createArmstrongIntelligences() {
 
   for (const intelligence of intelligences) {
     await prisma.armstrongIntelligence.upsert({
-      where: { intelligence }, // Certifique-se que existe um unique no campo 'intelligence'
+      where: { intelligence },
       update: {},
       create: { intelligence },
     });
   }
 }
 
-// Preenche LearningResult e LearningPreferences para cada aluno criado
+// Preenche LearningResult, LearningPreferences e ArmstrongIntelligences para cada aluno criado de forma aleatória
 async function createLearningDataForStudents() {
   const students = await prisma.user.findMany({
     where: { role: "STUDENT" },
-    orderBy: { id: 'asc' } // Garante ordem estável
+    orderBy: { id: 'asc' }
   });
 
   for (let idx = 0; idx < students.length; idx++) {
     const student = students[idx];
+
     // LearningResult (Inventário das Inteligências Múltiplas)
-    // Gera 8 valores aleatórios que somam 100, mas com padrão diferente para cada estudante
-    let lr = Array(8).fill(0).map((_, i) => Math.random() + (i === idx % 8 ? 1.5 : 0));
+    let lr = Array(8).fill(0).map(() => Math.random());
     const lrSum = lr.reduce((a, b) => a + b, 0);
     lr = lr.map(v => Number(((v / lrSum) * 100).toFixed(2)));
     lr[7] = Number((100 - lr.slice(0, 7).reduce((a, b) => a + b, 0)).toFixed(2));
@@ -289,9 +323,9 @@ async function createLearningDataForStudents() {
         createdAt: new Date(),
       },
     });
+
     // LearningPreferences (CHAEA)
-    // Gera 4 valores aleatórios que somam 100, padrão diferente para cada estudante
-    let lp = Array(4).fill(0).map((_, i) => Math.random() + (i === idx % 4 ? 1.5 : 0));
+    let lp = Array(4).fill(0).map(() => Math.random());
     const lpSum = lp.reduce((a, b) => a + b, 0);
     lp = lp.map(v => Number(((v / lpSum) * 100).toFixed(2)));
     lp[3] = Number((100 - lp.slice(0, 3).reduce((a, b) => a + b, 0)).toFixed(2));
@@ -303,6 +337,24 @@ async function createLearningDataForStudents() {
         percentages: lp,
         createdAt: new Date(),
       },
+    });
+
+    // ArmstrongIntelligences (associa cada aluno a uma inteligência aleatória)
+    const intelligences = [
+      "Lógico-matemática",
+      "Linguística",
+      "Espacial",
+      "Musical",
+      "Corporal-cinestésica",
+      "Interpessoal",
+      "Intrapessoal",
+      "Naturalista",
+    ];
+    const randomIntelligence = intelligences[Math.floor(Math.random() * intelligences.length)];
+    await prisma.armstrongIntelligence.upsert({
+      where: { intelligence: randomIntelligence },
+      update: {},
+      create: { intelligence: randomIntelligence },
     });
   }
 }
