@@ -171,6 +171,11 @@ const TeacherDashboard = () => {
     media: ''
   });
 
+  // Novos estados para controle de exibição
+  const MAX_CARDS_VISIBLE = 4;
+  const [showAllClasses, setShowAllClasses] = useState(false);
+  const [showAllTexts, setShowAllTexts] = useState(false);
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -324,233 +329,83 @@ const TeacherDashboard = () => {
         ) : classes.length === 0 ? (
           <p>Nenhuma turma encontrada.</p>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
-            {classes.map((turma, idx) => (
-              <div key={turma.id || idx} style={{
-                background: '#f6f8fa',
-                borderRadius: 16,
-                boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
-                padding: 24,
-                minWidth: 320,
-                flex: '1 1 350px',
-                maxWidth: 420,
-                position: 'relative',
-                paddingBottom: turma.students.length > studentsPerPage ? 80 : 24
-              }}>
-                <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{turma.className}</h2>
-                {/* Média da turma */}
-                <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
-                  <span
-                    style={{ textDecoration: 'underline dotted', cursor: 'help' }}
-                    title="A média da turma é calculada somando as médias dos alunos e dividindo pelo número de alunos."
-                  >
-                    Média da turma:
-                  </span>
-                  {' '}
-                  {turma.students && turma.students.length > 0 && turma.students.filter(a => a.avg !== undefined && a.avg !== null).length > 0 ? (
-                    (turma.students.reduce((acc, a) => acc + (a.avg !== undefined && a.avg !== null ? Number(a.avg) : 0), 0) / turma.students.filter(a => a.avg !== undefined && a.avg !== null).length).toFixed(2)
-                  ) : '-'}
-                </div>
-                {/* Botão exportar XLSX turma e select de ordenação na mesma linha */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <button onClick={() => exportTurmaToXLSX(turma)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
-                  <select
-                    value={turma.sortOrder || 'az'}
-                    onChange={e => {
-                      const order = e.target.value;
-                      setClasses(prev => prev.map((t, i) => {
-                        if ((t.id || i) !== (turma.id || idx)) return t;
-                        const sorted = [...t.students].sort((a, b) => {
-                          if (order === 'az') return a.name.localeCompare(b.name);
-                          if (order === 'za') return b.name.localeCompare(a.name);
-                          if (order === 'media') return (b.avg ?? 0) - (a.avg ?? 0);
-                          if (order === 'menor') return (a.avg ?? 0) - (b.avg ?? 0);
-                          return 0;
-                        });
-                        return { ...t, students: sorted, sortOrder: order };
-                      }));
-                    }}
-                    style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
-                  >
-                    <option value="az">A-Z</option>
-                    <option value="za">Z-A</option>
-                    <option value="media">Maior média</option>
-                    <option value="menor">Menor média</option>
-                  </select>
-                </div>
-                {/* Lista de alunos */}
-                {(!turma.students || turma.students.length === 0) ? (
-                  <p style={{ color: '#888' }}>Nenhum aluno nesta turma.</p>
-                ) : (
-                  <>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
-                          <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Média</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {turma.students.slice((studentsPage[turma.id] || 0) * studentsPerPage, ((studentsPage[turma.id] || 0) + 1) * studentsPerPage).map((aluno) => (
-                          <tr key={aluno.id} style={{ cursor: 'pointer' }} onClick={() => handleStudentClick(aluno, turma)}>
-                            <td style={{ padding: 8 }}>{aluno.name}</td>
-                            <td style={{ padding: 8 }}>{aluno.avg !== undefined && aluno.avg !== null ? Number(aluno.avg).toFixed(2) : '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {turma.students.length > studentsPerPage && (
-                      <div style={{
-                        position: 'static', // Corrigido de 'absolute' para 'static'
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: 8,
-                        zIndex: 2,
-                        marginTop: 24
-                      }}>
-                        <button
-                          style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
-                          disabled={(studentsPage[turma.id] || 0) === 0}
-                          onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.max(0, (prev[turma.id] || 0) - 1) }))}
-                        >Anterior</button>
-                        <span style={{ alignSelf: 'center', fontWeight: 500 }}>
-                          Página {(studentsPage[turma.id] || 0) + 1} de {Math.ceil(turma.students.length / studentsPerPage)}
-                        </span>
-                        <button
-                          style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
-                          disabled={((studentsPage[turma.id] || 0) + 1) >= Math.ceil(turma.students.length / studentsPerPage)}
-                          onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.min(Math.ceil(turma.students.length / studentsPerPage) - 1, (prev[turma.id] || 0) + 1) }))}
-                        >Próxima</button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        {/* NOVA SESSÃO: Leituras */}
-        <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
-          <FaBook color="#2980b9" /> Leituras
-        </h1>
-        {loading ? (
-          <p>Carregando...</p>
-        ) : texts.length === 0 ? (
-          <p>Nenhuma leitura encontrada.</p>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
-            {texts.map((text, idx) => (
-              <div key={text.id || idx} style={{
-                background: '#f6f8fa',
-                borderRadius: 16,
-                boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
-                padding: 24,
-                minWidth: 320,
-                flex: '1 1 350px',
-                maxWidth: 420,
-                position: 'relative',
-                paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                  <h2 style={{ color: '#2980b9', margin: 0, marginRight: 8 }}>{text.name}</h2>
-                  <button onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))} style={{ marginLeft: 'auto', background: '#fff', color: '#2980b9', border: '1px solid #2980b9', borderRadius: 8, padding: '4px 12px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer' }}>Ver perguntas</button>
-                </div>
-                {/* Média da leitura */}
-                <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
-                  <span
-                    style={{ textDecoration: 'underline dotted', cursor: 'help' }}
-                    title="A média das notas é calculada somando todas as notas dos alunos que responderam à leitura e dividindo pelo número de alunos com nota."
-                  >
-                    Média das notas:
-                  </span>
-                  {' '}
-                  {text.students && text.students.length > 0 ? (
-                    (text.students.reduce((acc, a) => acc + (a.grade !== undefined && a.grade !== null ? Number(a.grade) : 0), 0) / text.students.filter(a => a.grade !== undefined && a.grade !== null).length).toFixed(2)
-                  ) : '-'}
-                </div>
-                {/* Botão exportar XLSX leitura e select de ordenação na mesma linha */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <button onClick={() => exportLeituraToXLSX(text)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
-                  <select
-                    value={text.sortOrder || 'az'}
-                    onChange={e => {
-                      const order = e.target.value;
-                      setTeacherTexts(prev => prev.map((t, i) => {
-                        if ((t.id || i) !== (text.id || idx)) return t;
-                        const sorted = [...t.students].sort((a, b) => {
-                          if (order === 'az') return a.name.localeCompare(b.name);
-                          if (order === 'za') return b.name.localeCompare(a.name);
-                          if (order === 'media') return (b.grade ?? 0) - (a.grade ?? 0);
-                          if (order === 'menor') return (a.grade ?? 0) - (b.grade ?? 0);
-                          return 0;
-                        });
-                        return { ...t, students: sorted, sortOrder: order };
-                      }));
-                    }}
-                    style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
-                  >
-                    <option value="az">A-Z</option>
-                    <option value="za">Z-A</option>
-                    <option value="media">Maior nota</option>
-                    <option value="menor">Menor nota</option>
-                  </select>
-                </div>
-                {/* Lista de alunos da leitura */}
-                {showQuestions[text.id || idx] ? (
-                  (!text.questions || text.questions.length === 0) ? (
-                    <p style={{ color: '#888' }}>Nenhuma pergunta cadastrada para esta leitura.</p>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Pergunta</th>
-                          <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Acertos</th>
-                          <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Total respostas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {text.questions.map((q, qi) => {
-                          const correctChoice = q.choices.find(c => c.isCorrect);
-                          const total = q.answers ? q.answers.length : 0;
-                          const acertos = q.answers && correctChoice
-                            ? q.answers.filter(a => String(a.choiceId) === String(correctChoice.id)).length
-                            : 0;
-                          return (
-                            <tr key={q.id || qi}>
-                              <td style={{ padding: 8 }}>{q.statement}</td>
-                              <td style={{ padding: 8, color: '#27ae60', fontWeight: 500 }}>{acertos}</td>
-                              <td style={{ padding: 8 }}>{total}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )
-                ) : (
-                  // Lista de alunos
-                  (!text.students || text.students.length === 0) ? (
-                    <p style={{ color: '#888' }}>Nenhum aluno respondeu esta leitura.</p>
+          <>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
+              {(showAllClasses ? classes : classes.slice(0, MAX_CARDS_VISIBLE)).map((turma, idx) => (
+                <div key={turma.id || idx} style={{
+                  background: '#f6f8fa',
+                  borderRadius: 16,
+                  boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+                  padding: 24,
+                  minWidth: 320,
+                  flex: '1 1 350px',
+                  maxWidth: 420,
+                  position: 'relative',
+                  paddingBottom: turma.students.length > studentsPerPage ? 80 : 24
+                }}>
+                  <h2 style={{ color: '#2980b9', marginBottom: 8 }}>{turma.className}</h2>
+                  {/* Média da turma */}
+                  <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
+                    <span
+                      style={{ textDecoration: 'underline dotted', cursor: 'help' }}
+                      title="A média da turma é calculada somando as médias dos alunos e dividindo pelo número de alunos."
+                    >
+                      Média da turma:
+                    </span>
+                    {' '}
+                    {turma.students && turma.students.length > 0 && turma.students.filter(a => a.avg !== undefined && a.avg !== null).length > 0 ? (
+                      (turma.students.reduce((acc, a) => acc + (a.avg !== undefined && a.avg !== null ? Number(a.avg) : 0), 0) / turma.students.filter(a => a.avg !== undefined && a.avg !== null).length).toFixed(2)
+                    ) : '-'}
+                  </div>
+                  {/* Botão exportar XLSX turma e select de ordenação na mesma linha */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <button onClick={() => exportTurmaToXLSX(turma)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
+                    <select
+                      value={turma.sortOrder || 'az'}
+                      onChange={e => {
+                        const order = e.target.value;
+                        setClasses(prev => prev.map((t, i) => {
+                          if ((t.id || i) !== (turma.id || idx)) return t;
+                          const sorted = [...t.students].sort((a, b) => {
+                            if (order === 'az') return a.name.localeCompare(b.name);
+                            if (order === 'za') return b.name.localeCompare(a.name);
+                            if (order === 'media') return (b.avg ?? 0) - (a.avg ?? 0);
+                            if (order === 'menor') return (a.avg ?? 0) - (b.avg ?? 0);
+                            return 0;
+                          });
+                          return { ...t, students: sorted, sortOrder: order };
+                        }));
+                      }}
+                      style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
+                    >
+                      <option value="az">A-Z</option>
+                      <option value="za">Z-A</option>
+                      <option value="media">Maior média</option>
+                      <option value="menor">Menor média</option>
+                    </select>
+                  </div>
+                  {/* Lista de alunos */}
+                  {(!turma.students || turma.students.length === 0) ? (
+                    <p style={{ color: '#888' }}>Nenhum aluno nesta turma.</p>
                   ) : (
                     <>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                           <tr>
                             <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
-                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Turma</th>
-                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Nota</th>
+                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Média</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {text.students.slice((textStudentsPage[text.id] || 0) * textStudentsPerPage, ((textStudentsPage[text.id] || 0) + 1) * textStudentsPerPage).map((aluno, i) => (
-                            <tr key={aluno.id + '-' + aluno.classId + '-' + i} style={{ cursor: 'pointer' }} onClick={() => handleStudentTextClick(aluno, text)}>
+                          {turma.students.slice((studentsPage[turma.id] || 0) * studentsPerPage, ((studentsPage[turma.id] || 0) + 1) * studentsPerPage).map((aluno) => (
+                            <tr key={aluno.id} style={{ cursor: 'pointer' }} onClick={() => handleStudentClick(aluno, turma)}>
                               <td style={{ padding: 8 }}>{aluno.name}</td>
-                              <td style={{ padding: 8 }}>{aluno.className || '-'}</td>
-                              <td style={{ padding: 8 }}>{aluno.grade !== undefined && aluno.grade !== null ? Number(aluno.grade).toFixed(2) : '-'}</td>
+                              <td style={{ padding: 8 }}>{aluno.avg !== undefined && aluno.avg !== null ? Number(aluno.avg).toFixed(2) : '-'}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                      {text.students.length > textStudentsPerPage && (
+                      {turma.students.length > studentsPerPage && (
                         <div style={{
                           position: 'static', // Corrigido de 'absolute' para 'static'
                           display: 'flex',
@@ -561,25 +416,199 @@ const TeacherDashboard = () => {
                         }}>
                           <button
                             style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
-                            disabled={(textStudentsPage[text.id] || 0) === 0}
-                            onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.max(0, (prev[text.id] || 0) - 1) }))}
+                            disabled={(studentsPage[turma.id] || 0) === 0}
+                            onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.max(0, (prev[turma.id] || 0) - 1) }))}
                           >Anterior</button>
                           <span style={{ alignSelf: 'center', fontWeight: 500 }}>
-                            Página {(textStudentsPage[text.id] || 0) + 1} de {Math.ceil(text.students.length / textStudentsPerPage)}
+                            Página {(studentsPage[turma.id] || 0) + 1} de {Math.ceil(turma.students.length / studentsPerPage)}
                           </span>
                           <button
                             style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
-                            disabled={((textStudentsPage[text.id] || 0) + 1) >= Math.ceil(text.students.length / textStudentsPerPage)}
-                            onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.min(Math.ceil(text.students.length / textStudentsPerPage) - 1, (prev[text.id] || 0) + 1) }))}
+                            disabled={((studentsPage[turma.id] || 0) + 1) >= Math.ceil(turma.students.length / studentsPerPage)}
+                            onClick={() => setStudentsPage(prev => ({ ...prev, [turma.id]: Math.min(Math.ceil(turma.students.length / studentsPerPage) - 1, (prev[turma.id] || 0) + 1) }))}
                           >Próxima</button>
                         </div>
                       )}
                     </>
-                  )
-                )}
+                  )}
+                </div>
+              ))}
+            </div>
+            {classes.length > MAX_CARDS_VISIBLE && (
+              <div style={{ textAlign: 'center', marginTop: 24 }}>
+                <button
+                  onClick={() => setShowAllClasses(v => !v)}
+                  style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 32px', fontWeight: 'bold', fontSize: 16, cursor: 'pointer' }}
+                >
+                  {showAllClasses ? 'Mostrar menos' : 'Mostrar mais'}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
+        )}
+        {/* NOVA SESSÃO: Leituras */}
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 40 }}>
+          <FaBook color="#2980b9" /> Leituras
+        </h1>
+        {loading ? (
+          <p>Carregando...</p>
+        ) : texts.length === 0 ? (
+          <p>Nenhuma leitura encontrada.</p>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
+              {(showAllTexts ? texts : texts.slice(0, MAX_CARDS_VISIBLE)).map((text, idx) => (
+                <div key={text.id || idx} style={{
+                  background: '#f6f8fa',
+                  borderRadius: 16,
+                  boxShadow: '0 2px 8px rgba(41,128,185,0.08)',
+                  padding: 24,
+                  minWidth: 320,
+                  flex: '1 1 350px',
+                  maxWidth: 420,
+                  position: 'relative',
+                  paddingBottom: text.students.length > textStudentsPerPage ? 80 : 24
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <h2 style={{ color: '#2980b9', margin: 0, marginRight: 8 }}>{text.name}</h2>
+                    <button onClick={() => setShowQuestions(prev => ({ ...prev, [text.id || idx]: !prev[text.id || idx] }))} style={{ marginLeft: 'auto', background: '#fff', color: '#2980b9', border: '1px solid #2980b9', borderRadius: 8, padding: '4px 12px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer' }}>Ver perguntas</button>
+                  </div>
+                  {/* Média da leitura */}
+                  <div style={{ color: '#888', fontWeight: 500, marginBottom: 8 }}>
+                    <span
+                      style={{ textDecoration: 'underline dotted', cursor: 'help' }}
+                      title="A média das notas é calculada somando todas as notas dos alunos que responderam à leitura e dividindo pelo número de alunos com nota."
+                    >
+                      Média das notas:
+                    </span>
+                    {' '}
+                    {text.students && text.students.length > 0 ? (
+                      (text.students.reduce((acc, a) => acc + (a.grade !== undefined && a.grade !== null ? Number(a.grade) : 0), 0) / text.students.filter(a => a.grade !== undefined && a.grade !== null).length).toFixed(2)
+                    ) : '-'}
+                  </div>
+                  {/* Botão exportar XLSX leitura e select de ordenação na mesma linha */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <button onClick={() => exportLeituraToXLSX(text)} style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Exportar XLSX</button>
+                    <select
+                      value={text.sortOrder || 'az'}
+                      onChange={e => {
+                        const order = e.target.value;
+                        setTeacherTexts(prev => prev.map((t, i) => {
+                          if ((t.id || i) !== (text.id || idx)) return t;
+                          const sorted = [...t.students].sort((a, b) => {
+                            if (order === 'az') return a.name.localeCompare(b.name);
+                            if (order === 'za') return b.name.localeCompare(a.name);
+                            if (order === 'media') return (b.grade ?? 0) - (a.grade ?? 0);
+                            if (order === 'menor') return (a.grade ?? 0) - (b.grade ?? 0);
+                            return 0;
+                          });
+                          return { ...t, students: sorted, sortOrder: order };
+                        }));
+                      }}
+                      style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }}
+                    >
+                      <option value="az">A-Z</option>
+                      <option value="za">Z-A</option>
+                      <option value="media">Maior nota</option>
+                      <option value="menor">Menor nota</option>
+                    </select>
+                  </div>
+                  {/* Lista de alunos da leitura */}
+                  {showQuestions[text.id || idx] ? (
+                    (!text.questions || text.questions.length === 0) ? (
+                      <p style={{ color: '#888' }}>Nenhuma pergunta cadastrada para esta leitura.</p>
+                    ) : (
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Pergunta</th>
+                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Acertos</th>
+                            <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Total respostas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {text.questions.map((q, qi) => {
+                            const correctChoice = q.choices.find(c => c.isCorrect);
+                            const total = q.answers ? q.answers.length : 0;
+                            const acertos = q.answers && correctChoice
+                              ? q.answers.filter(a => String(a.choiceId) === String(correctChoice.id)).length
+                              : 0;
+                            return (
+                              <tr key={q.id || qi}>
+                                <td style={{ padding: 8 }}>{q.statement}</td>
+                                <td style={{ padding: 8, color: '#27ae60', fontWeight: 500 }}>{acertos}</td>
+                                <td style={{ padding: 8 }}>{total}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )
+                  ) : (
+                    // Lista de alunos
+                    (!text.students || text.students.length === 0) ? (
+                      <p style={{ color: '#888' }}>Nenhum aluno respondeu esta leitura.</p>
+                    ) : (
+                      <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Aluno</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Turma</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: 8 }}>Nota</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {text.students.slice((textStudentsPage[text.id] || 0) * textStudentsPerPage, ((textStudentsPage[text.id] || 0) + 1) * textStudentsPerPage).map((aluno, i) => (
+                              <tr key={aluno.id + '-' + aluno.classId + '-' + i} style={{ cursor: 'pointer' }} onClick={() => handleStudentTextClick(aluno, text)}>
+                                <td style={{ padding: 8 }}>{aluno.name}</td>
+                                <td style={{ padding: 8 }}>{aluno.className || '-'}</td>
+                                <td style={{ padding: 8 }}>{aluno.grade !== undefined && aluno.grade !== null ? Number(aluno.grade).toFixed(2) : '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {text.students.length > textStudentsPerPage && (
+                          <div style={{
+                            position: 'static', // Corrigido de 'absolute' para 'static'
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: 8,
+                            zIndex: 2,
+                            marginTop: 24
+                          }}>
+                            <button
+                              style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                              disabled={(textStudentsPage[text.id] || 0) === 0}
+                              onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.max(0, (prev[text.id] || 0) - 1) }))}
+                            >Anterior</button>
+                            <span style={{ alignSelf: 'center', fontWeight: 500 }}>
+                              Página {(textStudentsPage[text.id] || 0) + 1} de {Math.ceil(text.students.length / textStudentsPerPage)}
+                            </span>
+                            <button
+                              style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(41,128,185,0.08)' }}
+                              disabled={((textStudentsPage[text.id] || 0) + 1) >= Math.ceil(text.students.length / textStudentsPerPage)}
+                              onClick={() => setTextStudentsPage(prev => ({ ...prev, [text.id]: Math.min(Math.ceil(text.students.length / textStudentsPerPage) - 1, (prev[text.id] || 0) + 1) }))}
+                            >Próxima</button>
+                          </div>
+                        )}
+                      </>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+            {texts.length > MAX_CARDS_VISIBLE && (
+              <div style={{ textAlign: 'center', marginTop: 24 }}>
+                <button
+                  onClick={() => setShowAllTexts(v => !v)}
+                  style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 32px', fontWeight: 'bold', fontSize: 16, cursor: 'pointer' }}
+                >
+                  {showAllTexts ? 'Mostrar menos' : 'Mostrar mais'}
+                </button>
+              </div>
+            )}
+          </>
         )}
         {/* NOVA SESSÃO: Todos os Alunos */}
         {loading ? (
