@@ -49,13 +49,6 @@ export async function GET(req) {
       where: { studentId: { in: studentIds }, classId: { in: classIds } }
     });
 
-    // Monta lista de textos respondidos por aluno
-    const texts = await prisma.text.findMany({
-      where: { classText: { some: { classId: { in: classIds } } } },
-      select: { id: true }
-    });
-    const textIds = texts.map(t => t.id);
-
     // Busca todos os textos atribuídos a cada turma (para totalLeituras por aluno)
     const classTextsAll = await prisma.classText.findMany({
       where: { classId: { in: classIds } },
@@ -98,16 +91,25 @@ export async function GET(req) {
       const learningLabels = ['Ativo', 'Reflexivo', 'Teórico', 'Pragmático'];
       const learningPredominant = learningIdx !== null && learningIdx !== -1 ? learningLabels[learningIdx] : null;
 
-      // Leituras respondidas e média
-      const studentPerformances = performances.filter(p => p.studentId === stu.id && textIds.includes(p.textId));
-      const leiturasRespondidas = studentPerformances.length;
-      // Total de leituras atribuídas ao aluno (textos das turmas em que ele está)
-      let totalLeituras = 0;
+      // --- CORREÇÃO: Leituras respondidas e total só das atribuídas ao aluno ---
+      // Textos atribuídos ao aluno (das turmas em que ele está)
+      let textosAtribuidos = [];
       if (stu.classIds && stu.classIds.length > 0) {
         const classTexts = classTextsAll.filter(ct => stu.classIds.includes(ct.classId));
-        totalLeituras = [...new Set(classTexts.map(ct => ct.textId))].length;
+        textosAtribuidos = [...new Set(classTexts.map(ct => ct.textId))];
       }
-      const mediaLeituras = leiturasRespondidas > 0 ? (studentPerformances.reduce((acc, p) => acc + (typeof p.grade === 'number' ? p.grade : 0), 0) / leiturasRespondidas).toFixed(2) : null;
+      const totalLeituras = textosAtribuidos.length;
+
+      // Leituras respondidas: só conta se respondeu uma leitura atribuída
+      const studentPerformances = performances.filter(
+        p => p.studentId === stu.id && textosAtribuidos.includes(p.textId)
+      );
+      // Se houver múltiplas respostas para o mesmo texto, conta só uma por texto
+      const leiturasRespondidas = [...new Set(studentPerformances.map(p => p.textId))].length;
+
+      const mediaLeituras = studentPerformances.length > 0
+        ? (studentPerformances.reduce((acc, p) => acc + (typeof p.grade === 'number' ? p.grade : 0), 0) / studentPerformances.length).toFixed(2)
+        : null;
 
       return {
         id: stu.id,
