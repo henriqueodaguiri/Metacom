@@ -307,10 +307,28 @@ const LearningPreferencesDashboard = () => {
                   {/* Descrição do(s) estilo(s) predominante(s) */}
                   {(() => {
                     if (!cls.avg || cls.avg.length === 0) return null;
-                    const max = Math.max(...cls.avg);
-                    const indices = cls.avg
-                      .map((v, i) => v === max ? i : -1)
+                    // Garante que todos os valores são números válidos
+                    const avg = cls.avg.map(v => (typeof v === 'number' && isFinite(v) ? v : 0)).slice(0, 4);
+                    const max = Math.max(...avg);
+                    if (max <= 0) {
+                      return (
+                        <div style={{ marginTop: 16, color: '#888' }}>
+                          Nenhum estilo predominante encontrado para esta turma.
+                        </div>
+                      );
+                    }
+
+                    const indices = avg
+                      .map((v, i) => v > 0 && v === max ? i : -1)
                       .filter(i => i !== -1);
+                    if (indices.length === 0) {
+                      return (
+                        <div style={{ marginTop: 16, color: '#888' }}>
+                          Nenhum estilo predominante encontrado para esta turma.
+                        </div>
+                      );
+                    }
+
                     return (
                       <div style={{ marginTop: 16 }}>
                         <b>Estilo(s) predominante(s):</b>
