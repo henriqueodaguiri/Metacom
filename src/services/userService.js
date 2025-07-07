@@ -37,7 +37,8 @@ const getStudentUndoneTexts = async (id) => {
   });
 
   if (!classUser.length) {
-    throw new AppError("O estudante não pertence a nenhuma classe!", 404);
+    // Em vez de lançar erro, retorna lista vazia
+    return [];
   }
 
   const undoneTexts = await Promise.all(
